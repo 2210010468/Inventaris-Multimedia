@@ -182,13 +182,6 @@
             <x-responsive-nav-link :href="route('purchases.index')" :active="request()->routeIs('purchases.*')">
                 {{ __('Transaksi Beli') }}
             </x-responsive-nav-link>
-            @auth
-                @if(auth()->user()->isHead())
-                    <x-responsive-nav-link :href="route('purchases.report')" :active="request()->routeIs('purchases.report')">
-                        {{ __('Laporan Pembelian') }}
-                    </x-responsive-nav-link>
-                @endif
-            @endauth
         </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200">
