@@ -8,7 +8,6 @@ use App\Http\Controllers\BorrowerController;
 use App\Http\Controllers\BorrowingController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\PurchaseController;
-use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,9 +19,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     // --- Profile Routes ---
