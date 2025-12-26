@@ -120,59 +120,26 @@ class PurchaseController extends Controller
 
         // Buat tools untuk setiap purchase item jika belum dibuat
         foreach ($purchase->items as $item) {
-    // 1. Cek apakah tool untuk item ini sudah dibuat (Prevent Duplication)
-    $existing = Tool::where('purchase_item_id', $item->id)->count();
-    if ($existing >= $item->quantity) {
-        continue; 
-    }
+            $existing = \App\Models\Tool::where('purchase_item_id', $item->id)->count();
+            if ($existing >= $item->quantity) {
+                continue; // sudah dibuat
+            }
 
-    // 2. Ambil Prefix dari Kategori Item tersebut
-    $category = Category::find($item->category_id);
-    
-    // Fallback jika kategori tidak punya kode, pakai 'UNK' (Unknown) atau 3 huruf nama alat
-    $prefix = $category && $category->code ? $category->code : strtoupper(substr($item->tool_name, 0, 3));
+            for ($i = 1; $i <= $item->quantity; $i++) {
+                $prefix = strtoupper(substr($item->tool_name, 0, 3));
+                $uniqueCode = $prefix . '-' . date('ymd') . '-' . strtoupper(Str::random(4));
 
-    // 3. Cari Nomor Urut Terakhir (MAX) di Database untuk kategori ini
-    // Logika ini dipindahkan ke luar loop quantity agar query tidak berat
-    $codes = Tool::where('category_id', $item->category_id)
-        ->where('tool_code', 'like', $prefix . '-%') // Cari yg depannya 'KODE-'
-        ->pluck('tool_code')
-        ->toArray();
-
-    $max = 0;
-    foreach ($codes as $c) {
-        // Regex untuk ambil angka di belakang strip terakhir
-        if (preg_match('/-(\d+)$/', $c, $m)) {
-            $n = intval($m[1]);
-            if ($n > $max) $max = $n;
+                \App\Models\Tool::create([
+                    'tool_code' => $uniqueCode,
+                    'tool_name' => $item->tool_name . ' #' . $i,
+                    'category_id' => $item->category_id,
+                    'current_condition' => 'Baik',
+                    'availability_status' => 'available',
+                    'purchase_item_id' => $item->id,
+                ]);
+            }
         }
-    }
 
-    // 4. Mulai Loop Pembuatan Alat sesuai Quantity
-    // Kita kurangi iterasi dengan jumlah yang existing (jika ada partial insert sebelumnya)
-    for ($i = 1; $i <= ($item->quantity - $existing); $i++) {
-        
-        $max++; // Increment nomor urut (Logic: Last Max + 1)
-        
-        // Format kode: CONTOH-001, CONTOH-002
-        $uniqueCode = sprintf('%s-%03d', $prefix, $max); 
-
-        // Cek double safety (opsional): pastikan kode belum ada (karena race condition)
-        // while (Tool::where('tool_code', $uniqueCode)->exists()) {
-        //     $max++;
-        //     $uniqueCode = sprintf('%s-%03d', $prefix, $max);
-        // }
-
-        Tool::create([
-            'tool_code'           => $uniqueCode,
-            'tool_name'           => $item->tool_name, // Tidak perlu pakai #1, #2 jika sudah ada kode unik
-            'category_id'         => $item->category_id,
-            'current_condition'   => 'Baik', // Default condition
-            'availability_status' => 'available',
-            'purchase_item_id'    => $item->id,
-        ]);
-    }
-}
         $purchase->status = 'approved';
         $purchase->save();
 

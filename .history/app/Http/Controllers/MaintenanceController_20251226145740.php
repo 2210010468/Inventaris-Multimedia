@@ -47,15 +47,6 @@ class MaintenanceController extends Controller
             'note' => 'required|string',
         ]);
 
-        // Cek lagi apakah alat statusnya 'available' sebelum disimpan.
-        $tool = Tool::find($request->tool_id);
-        
-        if ($tool->availability_status !== 'available') {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Gagal! Alat ini sedang dipinjam atau sedang dalam perbaikan lain.');
-        }
-
         // Simpan Data
         Maintenance::create([
             'tool_id' => $request->tool_id,
