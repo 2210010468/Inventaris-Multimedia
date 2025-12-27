@@ -8,30 +8,11 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    /**
-     * HANYA BAGIAN INI YANG DIUBAH
-     * Menambahkan logika pencarian (Request $request)
-     */
-    public function index(Request $request)
+    public function index()
     {
-        $query = Category::query();
-
-        // Logika Search
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('category_name', 'like', '%' . $search . '%')
-                  ->orWhere('code', 'like', '%' . $search . '%');
-            });
-        }
-
-        // Tetap menggunakan paginate(15) dan latest() sesuai kode asli Anda
-        $categories = $query->latest()->paginate(15);
-        
+        $categories = Category::latest()->paginate(15);
         return view('categories.index', compact('categories'));
     }
-
-    // --- BAGIAN KE BAWAH INI TETAP SAMA SEPERTI KODE ASLI ANDA ---
 
     public function create()
     {

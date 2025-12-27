@@ -38,34 +38,15 @@ class ToolController extends Controller
     // 2. SOFT DELETES (TRASH)
     // ==========================
 
-    // Menampilkan halaman sampah (soft deleted) dengan Filter & Search
-    public function trash(Request $request)
+    public function trash()
     {
-        // 1. Query Dasar: Hanya ambil data yang sudah dihapus (onlyTrashed)
-        $query = \App\Models\Tool::onlyTrashed()->with('category');
-
-        // 2. Logika Search (Nama atau Kode)
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('tool_name', 'like', '%' . $search . '%')
-                  ->orWhere('tool_code', 'like', '%' . $search . '%');
-            });
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['kepala','head'])) {
+             return redirect()->route('tools.index')->with('error', 'Akses ditolak.');
         }
 
-        // 3. Logika Filter Kategori
-        if ($request->has('category_id') && $request->category_id != '' && $request->category_id != 'all') {
-            $query->where('category_id', $request->category_id);
-        }
-
-        // 4. Ambil data (Pagination)
-        $tools = $query->orderBy('deleted_at', 'desc')->paginate(10);
-
-        // 5. Ambil semua kategori untuk isi dropdown filter
-        $categories = \App\Models\Category::all();
-
-        // 6. Return ke view 'tools.trash'
-        return view('tools.trash', compact('tools', 'categories'));
+        $tools = Tool::onlyTrashed()->with('category')->paginate(10);
+        return view('tools.trash', compact('tools'));
     }
 
     public function restore($id)
@@ -286,5 +267,33 @@ class ToolController extends Controller
         return $query;
     }
 
-    
+    // Menampilkan halaman sampah (soft deleted) dengan Filter & Search
+    public function trash(Request $request)
+    {
+        // 1. Query Dasar: Hanya ambil data yang sudah dihapus (onlyTrashed)
+        $query = \App\Models\Tool::onlyTrashed()->with('category');
+
+        // 2. Logika Search (Nama atau Kode)
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('tool_name', 'like', '%' . $search . '%')
+                  ->orWhere('tool_code', 'like', '%' . $search . '%');
+            });
+        }
+
+        // 3. Logika Filter Kategori
+        if ($request->has('category_id') && $request->category_id != '' && $request->category_id != 'all') {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // 4. Ambil data (Pagination)
+        $tools = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        // 5. Ambil semua kategori untuk isi dropdown filter
+        $categories = \App\Models\Category::all();
+
+        // 6. Return ke view 'tools.trash'
+        return view('tools.trash', compact('tools', 'categories'));
+    }
 }
