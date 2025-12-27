@@ -6,22 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('tools', function (Blueprint $table) {
             $table->id();
-            $table->string('tool_code')->unique()->nullable(); 
+            $table->string('tool_code')->unique()->nullable(); // Saya buat nullable jaga-jaga
             $table->string('tool_name');
             
-            // --- BAGIAN INI SAYA UBAH BIAR TIDAK ERROR ---
-            // Saya pakai unsignedBigInteger biasa, tanpa 'constrained'
-            // Jadi dia tidak akan ngecek tabel lain dulu.
+            // --- PERBAIKAN DISINI ---
+            // Kita pakai unsignedBigInteger dulu biar tidak error kalau tabel kategorinya belum ada
             $table->unsignedBigInteger('category_id')->nullable(); 
             
-            $table->string('current_condition')->default('Baik');
+            $table->string('current_condition')->default('Baik'); // Kasih default biar aman
             $table->enum('availability_status', ['available', 'borrowed', 'maintenance', 'disposed'])->default('available');
             
-            // --- INI JUGA DIUBAH ---
+            // --- PERBAIKAN DISINI ---
+            // Sama, kita longgarkan dulu kuncinya
             $table->unsignedBigInteger('purchase_item_id')->nullable();
             
             $table->timestamps();
@@ -29,6 +32,9 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('tools');

@@ -172,21 +172,21 @@
             </x-responsive-nav-link>
 
             <div class="pt-2 pb-2 px-4 text-xs font-bold text-gray-500 uppercase">Pembelian</div>
-            <x-responsive-nav-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')">
-                {{ __('Vendor') }}
-            </x-responsive-nav-link>
+<x-responsive-nav-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')">
+    {{ __('Vendor') }}
+</x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route('purchases.request')" :active="request()->routeIs('purchases.request')">
-                {{ __('List Permohonan') }}
-            </x-responsive-nav-link>
+<x-responsive-nav-link :href="route('purchases.request')" :active="request()->routeIs('purchases.request')">
+    {{ __('List Permohonan') }}
+</x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route('purchases.transaction')" :active="request()->routeIs('purchases.transaction')">
-                {{ __('Transaksi / To-Do') }}
-            </x-responsive-nav-link>
+<x-responsive-nav-link :href="route('purchases.transaction')" :active="request()->routeIs('purchases.transaction')">
+    {{ __('Transaksi / To-Do') }}
+</x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route('purchases.history')" :active="request()->routeIs('purchases.history')">
-                {{ __('Riwayat') }}
-            </x-responsive-nav-link>
+<x-responsive-nav-link :href="route('purchases.history')" :active="request()->routeIs('purchases.history')">
+    {{ __('Riwayat') }}
+</x-responsive-nav-link>
         </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200">

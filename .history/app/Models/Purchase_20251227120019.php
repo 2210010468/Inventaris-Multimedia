@@ -57,7 +57,7 @@ class Purchase extends Model
     // Relasi Baru ke Kategori
     public function category()
     {
-        return $this->belongsTo(Category::class, 'category_id');
+        return $this->belongsTo(ToolCategory::class, 'category_id');
     }
 
     // PENTING: function items() DIHAPUS 

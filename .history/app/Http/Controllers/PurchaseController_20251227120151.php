@@ -6,6 +6,7 @@ use App\Models\Purchase;
 use App\Models\Vendor;
 use App\Models\Category;
 use App\Models\Tool;
+use App\Models\ToolCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -161,46 +162,40 @@ class PurchaseController extends Controller
     // ----------------------------------------------------------------------
     public function storePurchaseEvidence(Request $request, $id)
     {
-        // 1. VALIDASI INPUT (Sesuai name="proof_photo" di View)
         $request->validate([
-            'proof_photo' => 'required|image|max:2048', // <--- SUDAH SAYA GANTI JADI proof_photo
-            'real_price'  => 'required|numeric',       // <--- Tambahan biar harga tersimpan
+            'proof_file' => 'required|image|max:2048',
         ]);
 
         $purchase = Purchase::findOrFail($id);
 
-        // 2. SIMPAN HARGA REALISASI & BUKTI
-        // Update harga kalau admin ubah di modal
-        if ($request->has('real_price')) {
-            $purchase->unit_price = $request->real_price; 
-            // Opsional: Update subtotal juga kalau mau
-            $purchase->subtotal = $request->real_price * $purchase->quantity;
-        }
-
-        // Upload Foto
-        if ($request->hasFile('proof_photo')) {
-            $path = $request->file('proof_photo')->store('proofs', 'public');
+        // 1. UPLOAD FOTO
+        if ($request->hasFile('proof_file')) {
+            $path = $request->file('proof_file')->store('proofs', 'public');
             $purchase->transaction_proof_photo = $path;
         }
 
-        // Update Status jadi Selesai
         $purchase->status = 'completed';
         $purchase->is_purchased = true;
         $purchase->save();
 
-        // ==========================================================
-        // 3. GENERATOR KODE ASET (Sesuai Category.php Abang)
-        // ==========================================================
+        // 2. GENERATOR KODE (METODE MANUAL & KUAT)
         
-        $category = Category::find($purchase->category_id);
+        // Cari baris kategori berdasarkan ID yang ada di pembelian
+        $category = ToolCategory::where('id', $purchase->category_id)->first();
         
-        // Default Prefix
-        $prefix = 'GEN'; 
+        // Siapkan nama default
+        $catName = 'TOL'; 
 
-        // Ambil 3 huruf depan dari category_name
-        if ($category && !empty($category->category_name)) {
-            $prefix = strtoupper(substr($category->category_name, 0, 3));
+        if ($category) {
+            // Ambil nama, paksa jadi string
+            $catName = $category->category_name;
+        } else {
+            // DEBUGGING: Kalau masuk sini, berarti ID Kategori di pembelian SALAH/KOSONG
+            // Cek apakah data pembelian abang punya category_id?
         }
+
+        // Ambil 3 huruf depan, huruf besar. Contoh: "Kamera" -> "KAM"
+        $prefix = strtoupper(substr($catName, 0, 3)); 
 
         // Cari nomor urut terakhir
         $lastTool = Tool::where('tool_code', 'like', $prefix . '-%')
@@ -209,18 +204,18 @@ class PurchaseController extends Controller
 
         $nextNumber = 1;
         if ($lastTool) {
+            // Pecah kode terakhir (Misal KAM-005)
             $parts = explode('-', $lastTool->tool_code);
+            // Ambil angka belakangnya
             if (count($parts) >= 2) {
                 $nextNumber = intval(end($parts)) + 1;
             }
         }
 
+        // Gabungkan
         $generatedCode = $prefix . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        
-        // ==========================================================
-        // 4. MASUKKAN KE DAFTAR ALAT (INVENTORY)
-        // ==========================================================
 
+        // 3. SIMPAN
         Tool::create([
             'tool_code'         => $generatedCode,
             'tool_name'         => $purchase->tool_name,
@@ -230,8 +225,7 @@ class PurchaseController extends Controller
             'availability_status' => 'available',
         ]);
 
-        // 5. PINDAH KE HALAMAN RIWAYAT
-        return redirect()->route('purchases.history')->with('success', 'Transaksi Selesai! Barang masuk inventaris: ' . $generatedCode);
+        return redirect()->route('purchases.history')->with('success', 'Sukses! Kode Barang: ' . $generatedCode);
     }
 
     public function show($id)

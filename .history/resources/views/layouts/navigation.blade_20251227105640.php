@@ -93,22 +93,22 @@
                             </button>
                         </x-slot>
                         <x-slot name="content">
-                            <x-dropdown-link :href="route('vendors.index')">
-                                {{ __('Daftar Vendor') }}
-                            </x-dropdown-link>
+    <x-dropdown-link :href="route('vendors.index')">
+        {{ __('Daftar Vendor') }}
+    </x-dropdown-link>
 
-                            <x-dropdown-link :href="route('purchases.request')">
-                                {{ __('List Permohonan') }}
-                            </x-dropdown-link>
+    <x-dropdown-link :href="route('purchases.request')">
+        {{ __('List Permohonan') }}
+    </x-dropdown-link>
 
-                            <x-dropdown-link :href="route('purchases.transaction')">
-                                {{ __('Transaksi (To-Do)') }}
-                            </x-dropdown-link>
+    <x-dropdown-link :href="route('purchases.transaction')">
+        {{ __('Transaksi (To-Do)') }}
+    </x-dropdown-link>
 
-                            <x-dropdown-link :href="route('purchases.history')">
-                                {{ __('Riwayat Pembelian') }}
-                            </x-dropdown-link>
-                        </x-slot>
+    <x-dropdown-link :href="route('purchases.history')">
+        {{ __('Riwayat Pembelian') }}
+    </x-dropdown-link>
+</x-slot>
                     </x-dropdown>
                 </div>
             </div>
@@ -175,15 +175,12 @@
             <x-responsive-nav-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')">
                 {{ __('Vendor') }}
             </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('purchases.request')" :active="request()->routeIs('purchases.request')">
-                {{ __('List Permohonan') }}
+            <x-responsive-nav-link :href="route('purchases.index')" :active="request()->routeIs('purchases.index')">
+                {{ __('Permohonan') }}
             </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('purchases.transaction')" :active="request()->routeIs('purchases.transaction')">
-                {{ __('Transaksi / To-Do') }}
+             <x-responsive-nav-link :href="route('purchases.approved')" :active="request()->routeIs('purchases.approved')">
+                {{ __('Beli Barang') }}
             </x-responsive-nav-link>
-
             <x-responsive-nav-link :href="route('purchases.history')" :active="request()->routeIs('purchases.history')">
                 {{ __('Riwayat') }}
             </x-responsive-nav-link>

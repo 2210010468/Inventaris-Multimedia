@@ -89,30 +89,32 @@ class ToolController extends Controller
 
     public function store(Request $request)
     {
-        // 1. VALIDASI INPUT (SAYA SESUAIKAN DENGAN FILE BLADE ABANG)
+        // 1. Validasi Input
         $request->validate([
-            'tool_name'           => 'required|string|max:255',
-            'category_id'         => 'required|exists:tool_categories,id',
-            // Perbaikan: Pakai nama 'current_condition' sesuai form
-            'current_condition'   => 'required', 
-            // Perbaikan: Pakai nama 'availability_status' sesuai form
-            'availability_status' => 'required', 
+            'tool_name'   => 'required|string|max:255',
+            'category_id' => 'required|exists:tool_categories,id',
+            'condition'   => 'required|in:Baik,Rusak Ringan,Rusak Berat',
+            'status'      => 'required|in:available,in_use,maintenance,lost',
+            // Tambahkan validasi lain jika ada input foto/deskripsi
         ]);
 
         // ==========================================================
-        // 2. GENERATOR KODE OTOMATIS
+        // 2. GENERATOR KODE OTOMATIS (PERBAIKAN)
         // ==========================================================
         
+        // Ambil data kategori berdasarkan ID yang dipilih
         $category = Category::find($request->category_id);
 
+        // Default Prefix jika gagal baca kategori
         $prefix = 'TOOL'; 
 
-        // Ambil 3 huruf depan dari category_name
+        // Pastikan kita ambil dari kolom 'category_name' (Sesuai database abang)
         if ($category && !empty($category->category_name)) {
             $prefix = strtoupper(substr($category->category_name, 0, 3));
         }
 
-        // Cari nomor urut terakhir
+        // Cari nomor urut terakhir di tabel Tools berdasarkan prefix
+        // Contoh: Cari yang depannya "LAP-" kalau kategorinya Laptop
         $lastTool = Tool::where('tool_code', 'like', $prefix . '-%')
                         ->orderBy('id', 'desc')
                         ->first();
@@ -120,12 +122,16 @@ class ToolController extends Controller
         $nextNumber = 1;
         
         if ($lastTool) {
+            // Pecah string kode (Misal: LAP-005 -> jadi array ['LAP', '005'])
             $parts = explode('-', $lastTool->tool_code);
+            
+            // Ambil angka paling belakang
             if (count($parts) >= 2) {
                 $nextNumber = intval(end($parts)) + 1;
             }
         }
 
+        // Gabungkan jadi format: KODE-001 (Misal: LAP-001)
         $generatedCode = $prefix . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
         // ==========================================================
@@ -136,10 +142,9 @@ class ToolController extends Controller
             'tool_code'           => $generatedCode,
             'tool_name'           => $request->tool_name,
             'category_id'         => $request->category_id,
-            // Perbaikan: Ambil dari input yang benar
-            'current_condition'   => $request->current_condition, 
-            'availability_status' => $request->availability_status,
-            // 'purchase_item_id' => null, 
+            'current_condition'   => $request->condition,
+            'availability_status' => $request->status,
+            // 'purchase_item_id' => null, // Karena ini manual, tidak ada link ke pembelian
         ]);
 
         return redirect()->route('tools.index')->with('success', 'Berhasil! Alat manual ditambahkan dengan kode: ' . $generatedCode);

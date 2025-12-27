@@ -172,9 +172,9 @@ class PurchaseController extends Controller
         // 2. SIMPAN HARGA REALISASI & BUKTI
         // Update harga kalau admin ubah di modal
         if ($request->has('real_price')) {
-            $purchase->unit_price = $request->real_price; 
+            $purchase->real_price = $request->real_price; 
             // Opsional: Update subtotal juga kalau mau
-            $purchase->subtotal = $request->real_price * $purchase->quantity;
+            $purchase->subtotal = $purchase->real_price * $purchase->quantity;
         }
 
         // Upload Foto

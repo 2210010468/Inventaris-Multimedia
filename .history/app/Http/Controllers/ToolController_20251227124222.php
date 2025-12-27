@@ -87,7 +87,7 @@ class ToolController extends Controller
         return view('tools.create', compact('categories', 'nextCode'));
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
         // 1. VALIDASI INPUT (SAYA SESUAIKAN DENGAN FILE BLADE ABANG)
         $request->validate([

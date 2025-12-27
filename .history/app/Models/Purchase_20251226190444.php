@@ -57,6 +57,7 @@ class Purchase extends Model
     // Relasi Baru ke Kategori
     public function category()
     {
+        // Pastikan punya Model ToolCategory
         return $this->belongsTo(Category::class, 'category_id');
     }
 

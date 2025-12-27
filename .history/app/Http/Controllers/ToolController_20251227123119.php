@@ -87,63 +87,33 @@ class ToolController extends Controller
         return view('tools.create', compact('categories', 'nextCode'));
     }
 
-    public function store(Request $request)
-    {
-        // 1. VALIDASI INPUT (SAYA SESUAIKAN DENGAN FILE BLADE ABANG)
+     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['kepala','head'])) {
+            return redirect()->route('tools.index')->with('error', 'Akses ditolak.');
+        }
+        
+        // 1. Validasi Input (Hapus validasi tool_code dari user input karena akan auto-generate)
         $request->validate([
-            'tool_name'           => 'required|string|max:255',
-            'category_id'         => 'required|exists:tool_categories,id',
-            // Perbaikan: Pakai nama 'current_condition' sesuai form
-            'current_condition'   => 'required', 
-            // Perbaikan: Pakai nama 'availability_status' sesuai form
-            'availability_status' => 'required', 
+            // 'tool_code' tidak divalidasi dari input user agar konsisten by system
+            'tool_name' => 'required|string',
+            'category_id' => 'required|exists:tool_categories,id',
+            'current_condition' => 'required|string',
+            'availability_status' => 'nullable|in:available,borrowed,maintenance,lost,disposed,broken',
         ]);
 
-        // ==========================================================
-        // 2. GENERATOR KODE OTOMATIS
-        // ==========================================================
+        $data = $request->only(['tool_name', 'category_id', 'current_condition', 'availability_status']);
         
-        $category = Category::find($request->category_id);
-
-        $prefix = 'TOOL'; 
-
-        // Ambil 3 huruf depan dari category_name
-        if ($category && !empty($category->category_name)) {
-            $prefix = strtoupper(substr($category->category_name, 0, 3));
-        }
-
-        // Cari nomor urut terakhir
-        $lastTool = Tool::where('tool_code', 'like', $prefix . '-%')
-                        ->orderBy('id', 'desc')
-                        ->first();
-
-        $nextNumber = 1;
+        // 2. AUTO GENERATE CODE
+        // Fungsi ini menjamin kode mengikuti urutan terakhir MESKIPUN data terakhir sudah dihapus
+        $data['tool_code'] = $this->generateNextToolCode();
         
-        if ($lastTool) {
-            $parts = explode('-', $lastTool->tool_code);
-            if (count($parts) >= 2) {
-                $nextNumber = intval(end($parts)) + 1;
-            }
-        }
+        $data['availability_status'] = $data['availability_status'] ?? 'available';
 
-        $generatedCode = $prefix . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-
-        // ==========================================================
-        // 3. SIMPAN KE DATABASE
-        // ==========================================================
-
-        Tool::create([
-            'tool_code'           => $generatedCode,
-            'tool_name'           => $request->tool_name,
-            'category_id'         => $request->category_id,
-            // Perbaikan: Ambil dari input yang benar
-            'current_condition'   => $request->current_condition, 
-            'availability_status' => $request->availability_status,
-            // 'purchase_item_id' => null, 
-        ]);
-
-        return redirect()->route('tools.index')->with('success', 'Berhasil! Alat manual ditambahkan dengan kode: ' . $generatedCode);
-    }
+        Tool::create($data);
+        
+        return redirect()->route('tools.index')->with('success', 'Alat berhasil ditambahkan dengan kode: ' . $data['tool_code']);
+    }public function store(Request $request)
 
     public function edit($id) {
         $user = Auth::user();

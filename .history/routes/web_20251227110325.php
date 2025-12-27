@@ -65,8 +65,10 @@ Route::middleware('auth')->group(function () {
     // Halaman Approval (Status Pending)
     Route::get('/purchases/requests', [PurchaseController::class, 'indexRequests'])->name('purchases.request');
     
+    // Halaman Transaction/Todos (Status Approved -> Menunggu Upload Bukti)
+    Route::get('/purchases/todos', [PurchaseController::class, 'indexPurchases'])->name('purchases.todos');
+    
     // Halaman Riwayat (Status Rejected & Completed/Purchased)
-    Route::get('/purchases/transaction', [PurchaseController::class, 'indexTransaction'])->name('purchases.transaction');
     Route::get('/purchases/history', [PurchaseController::class, 'indexHistory'])->name('purchases.history');
 
     // 2. Action Routes (Tombol Aksi)

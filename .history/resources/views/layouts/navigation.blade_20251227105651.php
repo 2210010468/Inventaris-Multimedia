@@ -175,15 +175,12 @@
             <x-responsive-nav-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')">
                 {{ __('Vendor') }}
             </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('purchases.request')" :active="request()->routeIs('purchases.request')">
-                {{ __('List Permohonan') }}
+            <x-responsive-nav-link :href="route('purchases.index')" :active="request()->routeIs('purchases.index')">
+                {{ __('Permohonan') }}
             </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('purchases.transaction')" :active="request()->routeIs('purchases.transaction')">
-                {{ __('Transaksi / To-Do') }}
+             <x-responsive-nav-link :href="route('purchases.approved')" :active="request()->routeIs('purchases.approved')">
+                {{ __('Beli Barang') }}
             </x-responsive-nav-link>
-
             <x-responsive-nav-link :href="route('purchases.history')" :active="request()->routeIs('purchases.history')">
                 {{ __('Riwayat') }}
             </x-responsive-nav-link>

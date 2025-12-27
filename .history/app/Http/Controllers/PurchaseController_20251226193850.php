@@ -9,7 +9,6 @@ use App\Models\Tool;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class PurchaseController extends Controller
@@ -161,77 +160,72 @@ class PurchaseController extends Controller
     // ----------------------------------------------------------------------
     public function storePurchaseEvidence(Request $request, $id)
     {
-        // 1. VALIDASI INPUT (Sesuai name="proof_photo" di View)
         $request->validate([
-            'proof_photo' => 'required|image|max:2048', // <--- SUDAH SAYA GANTI JADI proof_photo
-            'real_price'  => 'required|numeric',       // <--- Tambahan biar harga tersimpan
+            'proof_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'real_price'  => 'nullable|numeric', 
         ]);
 
-        $purchase = Purchase::findOrFail($id);
+        try {
+            DB::beginTransaction();
 
-        // 2. SIMPAN HARGA REALISASI & BUKTI
-        // Update harga kalau admin ubah di modal
-        if ($request->has('real_price')) {
-            $purchase->unit_price = $request->real_price; 
-            // Opsional: Update subtotal juga kalau mau
-            $purchase->subtotal = $request->real_price * $purchase->quantity;
-        }
+            $purchase = Purchase::findOrFail($id);
 
-        // Upload Foto
-        if ($request->hasFile('proof_photo')) {
-            $path = $request->file('proof_photo')->store('proofs', 'public');
-            $purchase->transaction_proof_photo = $path;
-        }
-
-        // Update Status jadi Selesai
-        $purchase->status = 'completed';
-        $purchase->is_purchased = true;
-        $purchase->save();
-
-        // ==========================================================
-        // 3. GENERATOR KODE ASET (Sesuai Category.php Abang)
-        // ==========================================================
-        
-        $category = Category::find($purchase->category_id);
-        
-        // Default Prefix
-        $prefix = 'GEN'; 
-
-        // Ambil 3 huruf depan dari category_name
-        if ($category && !empty($category->category_name)) {
-            $prefix = strtoupper(substr($category->category_name, 0, 3));
-        }
-
-        // Cari nomor urut terakhir
-        $lastTool = Tool::where('tool_code', 'like', $prefix . '-%')
-                        ->orderBy('id', 'desc')
-                        ->first();
-
-        $nextNumber = 1;
-        if ($lastTool) {
-            $parts = explode('-', $lastTool->tool_code);
-            if (count($parts) >= 2) {
-                $nextNumber = intval(end($parts)) + 1;
+            // A. Upload Foto Bukti
+            if ($request->hasFile('proof_photo')) {
+                $path = $request->file('proof_photo')->store('bukti_pembelian', 'public');
+                $purchase->transaction_proof_photo = $path;
             }
+
+            // B. Update Harga Real (Jika ada)
+            if($request->filled('real_price')) {
+                $purchase->unit_price = $request->real_price;
+                $purchase->subtotal = $request->real_price * $purchase->quantity;
+            }
+
+            // C. Update Logic Utama: IS_PURCHASED = TRUE
+            $purchase->is_purchased = true;
+            $purchase->save();
+
+            // D. GENERATE TOOLS (Masuk ke Data Barang)
+            $category = Category::find($purchase->category_id);
+            // Buat prefix kode: ambil dari kategori atau 3 huruf nama alat
+            $prefix = $category && $category->code ? $category->code : strtoupper(substr($purchase->tool_name, 0, 3));
+
+            // Cari nomor urut terakhir di DB Tool
+            $lastTool = Tool::where('tool_code', 'like', "$prefix-%")
+                            ->orderByRaw('LENGTH(tool_code) desc')
+                            ->orderBy('tool_code', 'desc')
+                            ->first();
+
+            $lastNumber = 0;
+            if ($lastTool) {
+                $parts = explode('-', $lastTool->tool_code);
+                $lastNumber = intval(end($parts));
+            }
+
+            // Loop sebanyak Quantity untuk insert ke tabel Tools
+            for ($i = 1; $i <= $purchase->quantity; $i++) {
+                $lastNumber++;
+                $newCode = sprintf('%s-%03d', $prefix, $lastNumber);
+
+                Tool::create([
+                    'tool_code'           => $newCode,
+                    'tool_name'           => $purchase->tool_name,
+                    'category_id'         => $purchase->category_id,
+                    'current_condition'   => 'Baik',
+                    'availability_status' => 'available',
+                    'source'              => 'Pembelian PO: ' . $purchase->purchase_code,
+                ]);
+            }
+
+            DB::commit();
+            // Redirect ke halaman transaction (karena data akan hilang dari list ini dan masuk history)
+            return redirect()->route('purchases.transaction')->with('success', 'Transaksi selesai! Barang telah masuk ke inventaris.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal memproses: ' . $e->getMessage());
         }
-
-        $generatedCode = $prefix . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        
-        // ==========================================================
-        // 4. MASUKKAN KE DAFTAR ALAT (INVENTORY)
-        // ==========================================================
-
-        Tool::create([
-            'tool_code'         => $generatedCode,
-            'tool_name'         => $purchase->tool_name,
-            'category_id'       => $purchase->category_id,
-            'purchase_item_id'  => $purchase->id,
-            'current_condition' => 'Baik',
-            'availability_status' => 'available',
-        ]);
-
-        // 5. PINDAH KE HALAMAN RIWAYAT
-        return redirect()->route('purchases.history')->with('success', 'Transaksi Selesai! Barang masuk inventaris: ' . $generatedCode);
     }
 
     public function show($id)
