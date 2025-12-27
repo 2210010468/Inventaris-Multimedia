@@ -8,7 +8,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- PESAN SUKSES / ERROR --}}
+            {{-- 1. PESAN SUKSES / ERROR (Style Copas Contoh) --}}
             @if (session('success'))
                 <div class="mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 shadow-sm" role="alert">
                     <p class="font-bold">Berhasil!</p>
@@ -23,29 +23,35 @@
                 </div>
             @endif
 
+            {{-- 2. KONTAINER UTAMA --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
 
-                    {{-- FILTER & TOMBOL TAMBAH --}}
+                    {{-- A. BAGIAN ATAS: FILTER & TOMBOL TAMBAH --}}
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
                         
+                        {{-- Form Filter (Inline / Satu Baris) --}}
                         <form action="{{ route('purchases.request') }}" method="GET" class="flex flex-col md:flex-row gap-2 w-full md:w-auto items-center">
                             
+                            {{-- Input Search --}}
                             <input type="text" name="search" value="{{ request('search') }}" 
                                 class="border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm w-full md:w-48"
                                 placeholder="Cari Kode / Barang...">
 
+                            {{-- Dropdown Status --}}
                             <select name="status" class="border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm w-full md:w-auto">
                                 <option value="all">- Semua Status -</option>
                                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
                                 <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Disetujui</option>
-                                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option> <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
+                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
                             </select>
 
+                            {{-- Tombol Filter --}}
                             <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm w-full md:w-auto">
                                 Filter
                             </button>
 
+                            {{-- Tombol Reset --}}
                             @if(request('search') || (request('status') && request('status') != 'all'))
                                 <a href="{{ route('purchases.request') }}" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 text-sm transition flex items-center justify-center w-full md:w-auto">
                                     Reset
@@ -53,6 +59,7 @@
                             @endif
                         </form>
 
+                        {{-- Tombol Tambah (Di Kanan) --}}
                         @auth
                             @if(!in_array(auth()->user()->role, ['kepala', 'head']))
                                 <a href="{{ route('purchases.create') }}" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm text-center text-sm">
@@ -62,7 +69,7 @@
                         @endauth
                     </div>
 
-                    {{-- TABEL DATA --}}
+                    {{-- B. TABEL DATA --}}
                     <div class="overflow-x-auto border rounded-lg">
                         <table class="min-w-full table-auto text-sm text-left">
                             <thead class="bg-gray-50 text-gray-600 uppercase font-medium">
@@ -109,11 +116,6 @@
                                                 <span class="bg-green-100 text-green-800 py-1 px-2 rounded-full text-xs font-bold border border-green-200">
                                                     Disetujui
                                                 </span>
-                                            @elseif($purchase->status == 'completed') 
-                                                {{-- TAMBAHAN UNTUK STATUS SELESAI --}}
-                                                <span class="bg-blue-100 text-blue-800 py-1 px-2 rounded-full text-xs font-bold border border-blue-200">
-                                                    Selesai
-                                                </span>
                                             @elseif($purchase->status == 'rejected')
                                                 <span class="bg-red-100 text-red-800 py-1 px-2 rounded-full text-xs font-bold border border-red-200">
                                                     Ditolak
@@ -129,10 +131,13 @@
                                         <td class="px-4 py-3 text-center">
                                             <div class="flex justify-center items-center space-x-2">
                                                 
+                                                {{-- LOGIC KEPALA (Approve/Reject) --}}
                                                 @if(in_array(auth()->user()->role, ['kepala', 'head']))
                                                     @if($purchase->status == 'pending')
+                                                        {{-- Tombol Approve --}}
                                                         <form action="{{ route('purchases.approve', $purchase->id) }}" method="POST">
-                                                            @csrf @method('PATCH')
+                                                            @csrf
+                                                            @method('PATCH')
                                                             <button type="submit" class="text-green-600 hover:text-green-900 bg-green-50 p-1 rounded border border-green-200" title="Setujui" onclick="return confirm('Setujui pengajuan ini?')">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -140,28 +145,29 @@
                                                             </button>
                                                         </form>
                                                         
+                                                        {{-- Tombol Reject --}}
                                                         <button type="button" class="text-red-600 hover:text-red-900 bg-red-50 p-1 rounded border border-red-200" title="Tolak" onclick="rejectPurchase({{ $purchase->id }})">
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                             </svg>
                                                         </button>
 
+                                                        {{-- Form Reject Hidden --}}
                                                         <form id="reject-form-{{ $purchase->id }}" action="{{ route('purchases.reject', $purchase->id) }}" method="POST" class="hidden">
-                                                            @csrf @method('PATCH')
+                                                            @csrf
+                                                            @method('PATCH')
                                                             <input type="hidden" name="note" id="note-{{ $purchase->id }}">
                                                         </form>
                                                     @else
-                                                        {{-- Indikator kalau sudah selesai/locked buat Kepala --}}
-                                                        <span class="text-gray-400 text-xs italic">
-                                                            {{ $purchase->status == 'completed' ? 'Tuntas' : 'Locked' }}
-                                                        </span>
+                                                        <span class="text-gray-400 text-xs italic">Selesai</span>
                                                     @endif
 
+                                                {{-- LOGIC STAFF (Hapus/Batal) --}}
                                                 @else
-                                                    {{-- STAFF --}}
                                                     @if($purchase->status == 'pending')
                                                         <form action="{{ route('purchases.destroy', $purchase->id) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pengajuan ini?');">
-                                                            @csrf @method('DELETE')
+                                                            @csrf
+                                                            @method('DELETE')
                                                             <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 p-1 rounded border border-red-200" title="Batalkan">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -169,9 +175,7 @@
                                                             </button>
                                                         </form>
                                                     @else
-                                                        <span class="text-gray-400 text-xs italic">
-                                                            {{ $purchase->status == 'completed' ? 'Tuntas' : 'Locked' }}
-                                                        </span>
+                                                        <span class="text-gray-400 text-xs italic">Locked</span>
                                                     @endif
                                                 @endif
 
@@ -189,6 +193,7 @@
                         </table>
                     </div>
 
+                    {{-- C. PAGINATION --}}
                     <div class="mt-6">
                         {{ $purchases->withQueryString()->links() }}
                     </div>

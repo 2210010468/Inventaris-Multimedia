@@ -57,12 +57,12 @@ class PurchaseController extends Controller
     // ----------------------------------------------------------------------
     public function indexTransaction(Request $request)
     {
-        // Query: Approved TAPI Belum Dibeli
+        // Query Dasar: Approved TAPI Belum Dibeli (is_purchased = false)
         $query = Purchase::with(['vendor', 'user', 'category'])
             ->where('status', 'approved')
             ->where('is_purchased', false);
 
-        // --- FILTER 1: SEARCH ---
+        // --- FILTER 1: SEARCH (Kode, Nama Barang, atau Vendor) ---
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -74,20 +74,17 @@ class PurchaseController extends Controller
             });
         }
 
-        // --- FILTER 2: BULAN ---
-        if ($request->filled('month')) {
-            $query->whereMonth('date', $request->month);
+        // --- FILTER 2: TANGGAL ---
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
         }
 
-        // --- FILTER 3: TAHUN ---
-        if ($request->filled('year')) {
-            $query->whereYear('date', $request->year);
-        }
-
+        // Eksekusi dengan Pagination (PENTING: gunakan paginate, bukan get)
         $purchases = $query->orderBy('date', 'asc')
                            ->paginate(10)
                            ->withQueryString();
 
+        // View diarahkan ke 'purchases.transaction'
         return view('purchases.transaction', compact('purchases'));
     }
 

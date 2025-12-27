@@ -16,37 +16,13 @@ class PurchaseController extends Controller
     // 1. HALAMAN "PERMOHONAN PEMBELIAN" (indexRequests)
     // Aturan: Menampilkan data ketika status != 'approved'
     // ----------------------------------------------------------------------
-    public function indexRequests(Request $request)
+    public function indexRequests()
     {
-        // Mulai Query
-        $query = Purchase::with(['vendor', 'user', 'category'])
-            // Hanya tampilkan yang BELUM disetujui (Pending & Rejected)
-            // Karena yang Approved pindah ke menu Transaksi
-            ->where('status', '!=', 'approved');
-
-        // --- FILTER 1: SEARCH (Kode / Nama Barang) ---
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('purchase_code', 'LIKE', "%{$search}%")
-                  ->orWhere('tool_name', 'LIKE', "%{$search}%");
-            });
-        }
-
-        // --- FILTER 2: STATUS (Pending / Rejected) ---
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
-        }
-
-        // --- FILTER 3: TANGGAL ---
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('date', [$request->start_date, $request->end_date]);
-        }
-
-        // Eksekusi dengan Pagination
-        $purchases = $query->orderBy('created_at', 'desc')
-                           ->paginate(10)
-                           ->withQueryString();
+        $purchases = Purchase::with(['vendor', 'user', 'category'])
+            // MENAMPILKAN: Pending (Menunggu) & Rejected (Ditolak)
+            ->where('status', '!=', 'approved')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return view('purchases.requests', compact('purchases'));
     }
@@ -55,39 +31,16 @@ class PurchaseController extends Controller
     // 2. HALAMAN "PEMBELIAN BARANG" (indexTransaction)
     // Aturan: Menampilkan data ketika status == 'approved'
     // ----------------------------------------------------------------------
-    public function indexTransaction(Request $request)
+    public function indexTransaction()
     {
-        // Query: Approved TAPI Belum Dibeli
-        $query = Purchase::with(['vendor', 'user', 'category'])
+        $purchases = Purchase::with(['vendor', 'user', 'category'])
+            // MENAMPILKAN: Approved (Disetujui) TAPI Belum Dibeli (is_purchased = false)
             ->where('status', 'approved')
-            ->where('is_purchased', false);
+            ->where('is_purchased', false) 
+            ->orderBy('date', 'asc')
+            ->get();
 
-        // --- FILTER 1: SEARCH ---
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('purchase_code', 'LIKE', "%{$search}%")
-                  ->orWhere('tool_name', 'LIKE', "%{$search}%")
-                  ->orWhereHas('vendor', function($v) use ($search) {
-                      $v->where('name', 'LIKE', "%{$search}%");
-                  });
-            });
-        }
-
-        // --- FILTER 2: BULAN ---
-        if ($request->filled('month')) {
-            $query->whereMonth('date', $request->month);
-        }
-
-        // --- FILTER 3: TAHUN ---
-        if ($request->filled('year')) {
-            $query->whereYear('date', $request->year);
-        }
-
-        $purchases = $query->orderBy('date', 'asc')
-                           ->paginate(10)
-                           ->withQueryString();
-
+        // View diarahkan ke 'purchases.transaction' sesuai permintaan sebelumnya
         return view('purchases.transaction', compact('purchases'));
     }
 

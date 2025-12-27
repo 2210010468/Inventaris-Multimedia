@@ -17,62 +17,11 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     
-                    {{-- HEADER TEXT --}}
                     <div class="mb-6">
                         <h3 class="text-lg font-medium text-gray-900">Pending Transactions</h3>
-                        <p class="text-sm text-gray-500">Upload bukti pembayaran untuk menyelesaikan transaksi.</p>
+                        <p class="text-sm text-gray-500">Daftar pengajuan yang sudah disetujui. Upload bukti pembayaran untuk menyelesaikan transaksi.</p>
                     </div>
 
-                    {{-- FILTER SECTION (DI KIRI) --}}
-                    <div class="mb-6">
-                        <form action="{{ url()->current() }}" method="GET" class="flex flex-col md:flex-row gap-2 w-full md:w-auto items-center justify-start">
-                            
-                            {{-- Search Input --}}
-                            <input type="text" name="search" value="{{ request('search') }}" 
-                                placeholder="Cari Kode / Vendor..." 
-                                class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2 w-full md:w-48">
-
-                            {{-- Filter Bulan --}}
-                            @php
-                                $indoMonths = [
-                                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 
-                                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 
-                                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-                                ];
-                            @endphp
-                            <select name="month" class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2 w-full md:w-auto">
-                                <option value="">- Semua Bulan -</option>
-                                @foreach($indoMonths as $key => $val)
-                                    <option value="{{ $key }}" {{ request('month') == $key ? 'selected' : '' }}>
-                                        {{ $val }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            {{-- Filter Tahun --}}
-                            <select name="year" class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2 w-full md:w-auto">
-                                <option value="">- Semua Tahun -</option>
-                                @for($y = date('Y'); $y >= date('Y') - 5; $y--)
-                                    <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>
-                                        {{ $y }}
-                                    </option>
-                                @endfor
-                            </select>
-
-                            {{-- Tombol --}}
-                            <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-700 w-full md:w-auto">
-                                Filter
-                            </button>
-                            
-                            @if(request('search') || request('month') || request('year'))
-                                <a href="{{ url()->current() }}" class="bg-red-500 text-white px-4 py-2 rounded-md text-sm hover:bg-red-600 w-full md:w-auto text-center flex items-center justify-center">
-                                    Reset
-                                </a>
-                            @endif
-                        </form>
-                    </div>
-
-                    {{-- TABLE --}}
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 border">
                             <thead class="bg-gray-100">
@@ -121,25 +70,18 @@
                                 @empty
                                 <tr>
                                     <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                        <p class="text-lg font-medium">No Pending Transactions Found</p>
+                                        <p class="text-lg font-medium">No Pending Transactions</p>
                                     </td>
                                 </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-                    
-                    {{-- PAGINATION --}}
-                    <div class="mt-4">
-                        {{ $purchases->withQueryString()->links() }}
-                    </div>
-
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- MODAL UPLOAD --}}
     <div id="uploadModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
@@ -166,7 +108,6 @@
                                     <div class="mb-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Final Price / Unit (Rp)</label>
                                         <input type="number" name="real_price" id="modalPrice" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                                        <p class="text-xs text-gray-400 mt-1">Sesuaikan harga jika berbeda dengan estimasi awal.</p>
                                     </div>
                                 </div>
                             </div>
@@ -187,12 +128,10 @@
             const form = document.getElementById('evidenceForm');
             const url = "{{ route('purchases.evidence', ':id') }}"; 
             form.action = url.replace(':id', id);
-            
             document.getElementById('modalToolName').innerText = name;
             document.getElementById('modalPrice').value = price;
             document.getElementById('uploadModal').classList.remove('hidden');
         }
-
         function closeModal() {
             document.getElementById('uploadModal').classList.add('hidden');
         }

@@ -8,6 +8,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
+            {{-- Flash Message --}}
             @if(session('success'))
                 <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
                     {{ session('success') }}
@@ -17,55 +18,33 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     
-                    {{-- HEADER TEXT --}}
-                    <div class="mb-6">
-                        <h3 class="text-lg font-medium text-gray-900">Pending Transactions</h3>
-                        <p class="text-sm text-gray-500">Upload bukti pembayaran untuk menyelesaikan transaksi.</p>
-                    </div>
+                    {{-- HEADER & FILTER SECTION --}}
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Pending Transactions</h3>
+                            <p class="text-sm text-gray-500">Upload bukti pembayaran untuk menyelesaikan transaksi.</p>
+                        </div>
 
-                    {{-- FILTER SECTION (DI KIRI) --}}
-                    <div class="mb-6">
-                        <form action="{{ url()->current() }}" method="GET" class="flex flex-col md:flex-row gap-2 w-full md:w-auto items-center justify-start">
+                        {{-- FORM FILTER (Search + Date Range) --}}
+                        <form action="{{ url()->current() }}" method="GET" class="flex flex-col md:flex-row gap-2 w-full md:w-auto items-center">
                             
-                            {{-- Search Input --}}
-                            <input type="text" name="search" value="{{ request('search') }}" 
-                                placeholder="Cari Kode / Vendor..." 
-                                class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2 w-full md:w-48">
+                            {{-- Filter Tanggal --}}
+                            <div class="flex gap-2">
+                                <input type="date" name="start_date" value="{{ request('start_date') }}" class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2" title="Tanggal Mulai">
+                                <span class="self-center text-gray-400">-</span>
+                                <input type="date" name="end_date" value="{{ request('end_date') }}" class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2" title="Tanggal Sampai">
+                            </div>
 
-                            {{-- Filter Bulan --}}
-                            @php
-                                $indoMonths = [
-                                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 
-                                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 
-                                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-                                ];
-                            @endphp
-                            <select name="month" class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2 w-full md:w-auto">
-                                <option value="">- Semua Bulan -</option>
-                                @foreach($indoMonths as $key => $val)
-                                    <option value="{{ $key }}" {{ request('month') == $key ? 'selected' : '' }}>
-                                        {{ $val }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            {{-- Filter Tahun --}}
-                            <select name="year" class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2 w-full md:w-auto">
-                                <option value="">- Semua Tahun -</option>
-                                @for($y = date('Y'); $y >= date('Y') - 5; $y--)
-                                    <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>
-                                        {{ $y }}
-                                    </option>
-                                @endfor
-                            </select>
+                            {{-- Filter Search --}}
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Kode / Vendor..." class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2 w-full md:w-48">
 
                             {{-- Tombol --}}
                             <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-700 w-full md:w-auto">
                                 Filter
                             </button>
                             
-                            @if(request('search') || request('month') || request('year'))
-                                <a href="{{ url()->current() }}" class="bg-red-500 text-white px-4 py-2 rounded-md text-sm hover:bg-red-600 w-full md:w-auto text-center flex items-center justify-center">
+                            @if(request('search') || request('start_date') || request('end_date'))
+                                <a href="{{ url()->current() }}" class="bg-red-500 text-white px-3 py-2 rounded-md text-sm hover:bg-red-600 w-full md:w-auto text-center">
                                     Reset
                                 </a>
                             @endif
@@ -185,6 +164,7 @@
     <script>
         function openModal(id, name, price) {
             const form = document.getElementById('evidenceForm');
+            // Pastikan route ini sesuai dengan route POST di web.php
             const url = "{{ route('purchases.evidence', ':id') }}"; 
             form.action = url.replace(':id', id);
             

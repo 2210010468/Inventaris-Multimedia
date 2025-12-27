@@ -56,6 +56,7 @@ class PurchaseController extends Controller
     // Aturan: Menampilkan data ketika status == 'approved'
     // ----------------------------------------------------------------------
     public function indexTransaction(Request $request)
+    
     {
         // Query: Approved TAPI Belum Dibeli
         $query = Purchase::with(['vendor', 'user', 'category'])

@@ -16,6 +16,21 @@ class PurchaseController extends Controller
     // 1. HALAMAN "PERMOHONAN PEMBELIAN" (indexRequests)
     // Aturan: Menampilkan data ketika status != 'approved'
     // ----------------------------------------------------------------------
+    public function indexRequests()
+    {
+        $purchases = Purchase::with(['vendor', 'user', 'category'])
+            // MENAMPILKAN: Pending (Menunggu) & Rejected (Ditolak)
+            ->where('status', '!=', 'approved')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('purchases.requests', compact('purchases'));
+    }
+
+    // ----------------------------------------------------------------------
+    // 2. HALAMAN "PEMBELIAN BARANG" (indexTransaction)
+    // Aturan: Menampilkan data ketika status == 'approved'
+    // ----------------------------------------------------------------------
     public function indexRequests(Request $request)
     {
         // Mulai Query
@@ -49,46 +64,6 @@ class PurchaseController extends Controller
                            ->withQueryString();
 
         return view('purchases.requests', compact('purchases'));
-    }
-
-    // ----------------------------------------------------------------------
-    // 2. HALAMAN "PEMBELIAN BARANG" (indexTransaction)
-    // Aturan: Menampilkan data ketika status == 'approved'
-    // ----------------------------------------------------------------------
-    public function indexTransaction(Request $request)
-    {
-        // Query: Approved TAPI Belum Dibeli
-        $query = Purchase::with(['vendor', 'user', 'category'])
-            ->where('status', 'approved')
-            ->where('is_purchased', false);
-
-        // --- FILTER 1: SEARCH ---
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('purchase_code', 'LIKE', "%{$search}%")
-                  ->orWhere('tool_name', 'LIKE', "%{$search}%")
-                  ->orWhereHas('vendor', function($v) use ($search) {
-                      $v->where('name', 'LIKE', "%{$search}%");
-                  });
-            });
-        }
-
-        // --- FILTER 2: BULAN ---
-        if ($request->filled('month')) {
-            $query->whereMonth('date', $request->month);
-        }
-
-        // --- FILTER 3: TAHUN ---
-        if ($request->filled('year')) {
-            $query->whereYear('date', $request->year);
-        }
-
-        $purchases = $query->orderBy('date', 'asc')
-                           ->paginate(10)
-                           ->withQueryString();
-
-        return view('purchases.transaction', compact('purchases'));
     }
 
     // ----------------------------------------------------------------------
