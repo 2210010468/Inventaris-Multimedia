@@ -6,27 +6,13 @@ use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+
 class VendorController extends Controller
 {
     // Menampilkan daftar vendor
-    public function index(Request $request)
+    public function index()
     {
-        $query = Vendor::query();
-
-        // Logika Filter
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%")
-                  ->orWhere('phone', 'LIKE', "%{$search}%")
-                  ->orWhere('address', 'LIKE', "%{$search}%");
-            });
-        }
-
-        // PENTING: Pakai paginate(10) supaya ->links() di view berfungsi
-        $vendors = $query->latest()->paginate(10)->withQueryString();
-
+        $vendors = Vendor::latest()->get();
         return view('vendors.index', compact('vendors'));
     }
 

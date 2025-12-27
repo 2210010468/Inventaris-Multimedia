@@ -20,7 +20,8 @@
             @endif
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+               <div class="p-6 text-gray-900">
+                    
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-medium text-gray-900">Daftar Supplier</h3>
                         

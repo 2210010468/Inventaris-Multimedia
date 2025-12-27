@@ -7,7 +7,6 @@ use App\Models\Tool;
 use App\Models\MaintenanceType; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Builder;
 
 class MaintenanceController extends Controller
 {

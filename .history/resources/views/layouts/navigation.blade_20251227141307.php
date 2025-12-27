@@ -71,10 +71,10 @@
                         </x-slot>
                         <x-slot name="content">
                             <x-dropdown-link :href="route('maintenances.index')">
-                                {{ __('Riwayat Perawatan & Perbaikan') }}
+                                {{ __('Riwayat PePerbaikan') }}
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('maintenance-types.index')">
-                                {{ __('Jenis Perawatan & Perbaikan') }}
+                                {{ __('Jenis Maintenance') }}
                             </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
