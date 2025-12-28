@@ -85,9 +85,6 @@ Route::middleware('auth')->group(function () {
     // --- Maintenance Routes ---
     Route::resource('maintenances', MaintenanceController::class);
     Route::resource('maintenance-types', MaintenanceTypeController::class);
-
-    // ROUTE USER MANAGEMENT
-    Route::resource('users', UserController::class);
 });
 
 require __DIR__.'/auth.php';
