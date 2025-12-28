@@ -41,7 +41,7 @@
                                     {{ __('Daftar Alat') }}
                                 </x-dropdown-link>
                                  <x-dropdown-link :href="route('tools.trash')">
-                                    {{ __('Alat Tak Terpakai') }}
+                                    {{ __('Sampah / Tak Terpakai') }}
                                 </x-dropdown-link>
     
                                 <div class="border-t border-gray-100"></div>
@@ -49,11 +49,11 @@
                                 <div class="block px-4 py-2 text-xs text-gray-400">
                                     {{ __('Maintenance') }}
                                 </div>
-                                <x-dropdown-link :href="route('maintenance-types.index')">
-                                    {{ __('Jenis Perawatan') }}
-                                </x-dropdown-link>
                                 <x-dropdown-link :href="route('maintenances.index')">
                                     {{ __('Riwayat Perawatan') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('maintenance-types.index')">
+                                    {{ __('Jenis Perawatan') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
@@ -75,11 +75,11 @@
                                 <div class="block px-4 py-2 text-xs text-gray-400">
                                     {{ __('Sirkulasi') }}
                                 </div>
-                                <x-dropdown-link :href="route('borrowers.index')">
-                                    {{ __('Data Peminjam') }}
-                                </x-dropdown-link>
                                 <x-dropdown-link :href="route('borrowings.index')">
                                     {{ __('Transaksi Peminjaman') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('borrowers.index')">
+                                    {{ __('Data Peminjam') }}
                                 </x-dropdown-link>
     
                                 <div class="border-t border-gray-100"></div>
@@ -87,9 +87,6 @@
                                 <div class="block px-4 py-2 text-xs text-gray-400">
                                     {{ __('Pengadaan Barang') }}
                                 </div>
-                                <x-dropdown-link :href="route('vendors.index')">
-                                    {{ __('Data Vendor') }}
-                                </x-dropdown-link>
                                 <x-dropdown-link :href="route('purchases.request')">
                                     {{ __('Permohonan (Request)') }}
                                 </x-dropdown-link>
@@ -98,6 +95,9 @@
                                 </x-dropdown-link>
                                  <x-dropdown-link :href="route('purchases.history')">
                                     {{ __('Riwayat Pembelian') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('vendors.index')">
+                                    {{ __('Data Vendor') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
