@@ -65,7 +65,7 @@
                                                         <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 p-1 rounded">Hapus</button>
                                                     </form>
                                                 @else
-                                                    <span class="text-gray-400 text-xs italic">Read Only</span>
+                                                    <span class="text-gray-500">(Read Only)</span>
                                                 @endif
                                             @endauth
                                         </td>
