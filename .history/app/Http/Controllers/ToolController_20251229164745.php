@@ -159,7 +159,6 @@ class ToolController extends Controller
             'category_id'         => $request->category_id,
             'current_condition'   => $request->current_condition, 
             'availability_status' => $request->availability_status,
-            'purchase_item_id'    => null, // Karena ini alat manual
         ]);
 
         return redirect()->route('tools.index')->with('success', 'Berhasil! Alat manual ditambahkan dengan kode: ' . $generatedCode);
