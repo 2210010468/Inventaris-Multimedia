@@ -201,8 +201,22 @@ class BorrowingController extends Controller
                     // === AUTO MAINTENANCE ===
                     if ($needsMaintenance) {
                         
-                        $maintenanceType = MaintenanceType::where('name', $request->return_condition)->first();
+                        // CARA 1: Cari Jenis Maintenance yang namanya SAMA PERSIS dengan kondisi input
+                        // (Pastikan di tabel maintenance_types ada nama 'Rusak Berat' atau 'Rusak Ringan')
+                        $maintenanceType = MaintenanceType::where('nama_jenis', $request->return_condition)->first();
                         
+                        // OPSI CARA 2 (Manual Mapping): Jika nama di tabel beda dengan input
+                        /*
+                        $namaDicari = 'Service Rutin'; // Default
+                        if($request->return_condition == 'Rusak Berat') {
+                             $namaDicari = 'Perbaikan Besar'; // Sesuaikan nama di DB
+                        } elseif ($request->return_condition == 'Rusak Ringan') {
+                             $namaDicari = 'Perbaikan Ringan'; // Sesuaikan nama di DB
+                        }
+                        $maintenanceType = MaintenanceType::where('nama_jenis', $namaDicari)->first();
+                        */
+
+                        // Fallback: Jika jenis tidak ditemukan di DB, baru ambil default (biar program gak crash)
                         $typeIdToUse = $maintenanceType ? $maintenanceType->id : (MaintenanceType::first()->id ?? 1);
 
                         Maintenance::create([

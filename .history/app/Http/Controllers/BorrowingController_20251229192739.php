@@ -201,7 +201,7 @@ class BorrowingController extends Controller
                     // === AUTO MAINTENANCE ===
                     if ($needsMaintenance) {
                         
-                        $maintenanceType = MaintenanceType::where('name', $request->return_condition)->first();
+                        $maintenanceType = MaintenanceType::where('nama_jenis', $request->return_condition)->first();
                         
                         $typeIdToUse = $maintenanceType ? $maintenanceType->id : (MaintenanceType::first()->id ?? 1);
 
