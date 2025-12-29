@@ -104,18 +104,21 @@ class MaintenanceController extends Controller
 
     public function edit(Maintenance $maintenance)
     {
+        // Block kepala/head
         $user = Auth::user();
         if ($user && in_array($user->role, ['kepala','head'])) {
             return redirect()->route('maintenances.index')->with('error', 'Akses ditolak.');
         }
 
+        // TAMBAHAN: Kita butuh daftar tipe maintenance untuk dropdown di halaman edit
         $types = MaintenanceType::all(); 
+
         return view('maintenances.edit', compact('maintenance', 'types'));
     }
 
     public function update(Request $request, Maintenance $maintenance)
     {
-        // A. SELESAI PERBAIKAN (Tombol Kanan)
+        // A. LOGIKA PENYELESAIAN (Tombol Kanan)
         if ($request->has('complete_maintenance')) {
             $request->validate([
                 'end_date' => 'required|date|after_or_equal:start_date',
@@ -128,31 +131,35 @@ class MaintenanceController extends Controller
                 'status' => 'completed',
             ]);
 
-            // Kembalikan alat jadi Available
+            // Kembalikan alat jadi Available & Kondisi Baik
             if ($maintenance->tool) {
                 $maintenance->tool->update([
                     'availability_status' => 'available',
-                    'current_condition'   => 'Baik'
+                    'current_condition'   => 'Baik' // Reset kondisi jadi Baik setelah servis
                 ]);
             }
 
             return redirect()->route('maintenances.index')->with('success', 'Perbaikan selesai.');
         }
 
-        // B. UPDATE INFO (Tombol Kiri) - Vendor DIHAPUS
+        // B. LOGIKA UPDATE BIASA (Form Kiri - Vendor, Tindakan, Tipe)
+        // Kita validasi data tambahan
         $request->validate([
             'note' => 'required|string',
             'start_date' => 'required|date',
-            'maintenance_type_id' => 'required|exists:maintenance_types,id',
+            'maintenance_type_id' => 'required|exists:maintenance_types,id', // Admin bisa ubah tipe
+            'vendor_name' => 'nullable|string',
             'action_taken' => 'nullable|string',
         ]);
         
+        // Update data
         $maintenance->update([
             'start_date' => $request->start_date,
             'note' => $request->note,
             'maintenance_type_id' => $request->maintenance_type_id,
+            'vendor_name' => $request->vendor_name,
             'action_taken' => $request->action_taken,
-            // Jika status masih pending (sisa data lama), ubah ke in_progress
+            // Jika status masih pending, ubah jadi in_progress saat diedit
             'status' => ($maintenance->status == 'pending') ? 'in_progress' : $maintenance->status
         ]);
 

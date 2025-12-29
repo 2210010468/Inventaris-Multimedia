@@ -6,7 +6,6 @@ use App\Models\Borrowing;
 use App\Models\Tool;
 use App\Models\Borrower;
 use App\Models\Maintenance;
-use App\Models\MaintenanceType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; 
 use Illuminate\Support\Facades\Auth;
@@ -19,17 +18,15 @@ class BorrowingController extends Controller
      */
     public function index(Request $request)
     {
+        // Panggil fungsi private untuk query agar tidak menulis ulang logika yang sama
         $query = $this->getFilteredQuery($request);
 
-        $borrowings = $query->with(['borrower', 'items.tool', 'user'])
-                            ->latest()
-                            ->paginate(5);        
+        // Ambil data dengan Pagination (6 per halaman)
+        $borrowings = $query->with(['borrower', 'items.tool', 'user']) // <--- Tambahkan 'user'
+                        ->latest()
+                        ->paginate(5);        
 
-        // [BARU] Ambil jenis maintenance buat dropdown
-        $maintenanceTypes = MaintenanceType::all(); 
-
-        // [UBAH] Tambahkan compact 'maintenanceTypes'
-        return view('borrowings.index', compact('borrowings', 'maintenanceTypes'));
+        return view('borrowings.index', compact('borrowings'));
     }
 
     /**
@@ -162,6 +159,7 @@ class BorrowingController extends Controller
 
     public function returnItem(Request $request, $id)
     {
+        // 1. Validasi (Tanggal kita hapus karena otomatis)
         $request->validate([
             'return_condition' => 'required|string',
             'final_status' => 'required|string',
@@ -170,7 +168,7 @@ class BorrowingController extends Controller
         DB::transaction(function () use ($request, $id) {
             $borrowing = Borrowing::with('items.tool')->findOrFail($id);
             
-            // 1. Update Peminjaman
+            // 2. Update Data Peminjaman (Tanggal Otomatis NOW)
             $borrowing->update([
                 'borrowing_status' => 'returned', 
                 'actual_return_date' => now(), 
@@ -178,51 +176,51 @@ class BorrowingController extends Controller
                 'final_status' => $request->final_status,
             ]);
 
-            // 2. Logic Status Alat
+            // 3. Logika Update Status Alat & Buat Maintenance
             $newToolStatus = 'available'; 
-            $needsMaintenance = false;
 
             if ($request->final_status == 'Hilang') {
                 $newToolStatus = 'disposed'; 
-            } elseif (in_array($request->return_condition, ['Rusak Berat', 'Rusak Ringan'])) {
+            } elseif ($request->return_condition == 'Rusak Berat','Rusak ') {
                 $newToolStatus = 'maintenance'; 
-                $needsMaintenance = true;
             } elseif ($request->final_status == 'Diganti') {
                 $newToolStatus = 'available'; 
             }
 
             foreach ($borrowing->items as $item) {
                 if($item->tool) {
+                    // Update Status Alat di Master Data
                     $item->tool->update([
                         'availability_status' => $newToolStatus,
                         'current_condition' => $request->return_condition
                     ]);
 
-                    // === AUTO MAINTENANCE ===
-                    if ($needsMaintenance) {
-                        $defaultType = MaintenanceType::first();
-                        $typeId = $defaultType ? $defaultType->id : 1; 
-
+                    // ========================================================
+                    // FITUR OTOMATIS: JIKA RUSAK BERAT -> MASUK MAINTENANCE
+                    // ========================================================
+                    if ($request->return_condition == 'Rusak Berat') {
                         Maintenance::create([
                             'tool_id'       => $item->tool_id,
-                            'user_id'       => Auth::id(),
-                            'start_date'    => now(),
-                            'note'          => $request->return_condition . ' - Eks Peminjaman #' . $borrowing->id,
-                            'maintenance_type_id' => $typeId,
+                            'user_id'       => Auth::id(), // Admin yang memproses
+                            'start_date'    => now(),      // Tanggal masuk maintenance hari ini
                             
-                            // REVISI: Langsung set status 'in_progress' (Proses)
-                            'status'        => 'in_progress', 
+                            // Isi Note dengan info peminjaman agar jelas asal kerusakannya
+                            'note'          => 'Rusak Berat - Eks Peminjaman #' . $borrowing->id,
                             
-                            'cost'          => 0,
-                            // 'vendor_name' dihapus/tidak diisi
+                            // Data ini KOSONG (NULL) dulu, nanti diisi di menu Maintenance
+                            'maintenance_type_id' => null, 
+                            'vendor_name'   => null,
                             'action_taken'  => null,
+                            'cost'          => 0,
+                            'status'        => 'pending' // Status menunggu perbaikan
                         ]);
                     }
+                    // ========================================================
                 }
             }
         });
 
-        return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan. Masuk status maintenance (Proses).');
+        return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan. Jika Rusak Berat, data Maintenance telah dibuat otomatis.');
     }
 
     public function edit($id)

@@ -9,15 +9,15 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                {{-- KOLOM KIRI: EDIT DATA --}}
+                {{-- KOLOM KIRI: INFO & EDIT DETAIL --}}
                 <div class="bg-white p-6 shadow-sm rounded-lg">
-                    <h3 class="font-bold text-lg mb-4 border-b pb-2">Edit Informasi</h3>
+                    <h3 class="font-bold text-lg mb-4 border-b pb-2">Edit Informasi & Vendor</h3>
                     
                     <form action="{{ route('maintenances.update', $maintenance->id) }}" method="POST">
                         @csrf
                         @method('PUT')
 
-                        {{-- Info Alat --}}
+                        {{-- Nama Alat (Read Only) --}}
                         <div class="mb-4 bg-gray-50 p-3 rounded">
                             <label class="block text-xs font-bold text-gray-500 uppercase">Nama Alat</label>
                             <div class="text-lg font-bold text-gray-800">{{ $maintenance->tool->tool_name }}</div>
@@ -30,7 +30,7 @@
                             <input type="date" name="start_date" value="{{ $maintenance->start_date }}" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
                         </div>
 
-                        {{-- Jenis Maintenance --}}
+                        {{-- Jenis Maintenance (Dropdown) --}}
                         <div class="mb-3">
                             <label class="block text-sm font-bold text-gray-700">Jenis Perbaikan</label>
                             <select name="maintenance_type_id" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
@@ -42,10 +42,16 @@
                             </select>
                         </div>
 
-                        {{-- Action Taken --}}
+                        {{-- Vendor Name (BARU) --}}
+                        <div class="mb-3">
+                            <label class="block text-sm font-bold text-gray-700">Vendor / Teknisi</label>
+                            <input type="text" name="vendor_name" value="{{ $maintenance->vendor_name }}" placeholder="Nama bengkel atau teknisi" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
+                        </div>
+
+                        {{-- Action Taken (BARU) --}}
                         <div class="mb-3">
                             <label class="block text-sm font-bold text-gray-700">Tindakan Perbaikan</label>
-                            <textarea name="action_taken" rows="3" placeholder="Apa yang diperbaiki/diganti?" class="w-full border-gray-300 rounded-md shadow-sm text-sm">{{ $maintenance->action_taken }}</textarea>
+                            <textarea name="action_taken" rows="2" placeholder="Apa yang diperbaiki/diganti?" class="w-full border-gray-300 rounded-md shadow-sm text-sm">{{ $maintenance->action_taken }}</textarea>
                         </div>
 
                         {{-- Catatan Kerusakan --}}
@@ -54,6 +60,7 @@
                             <textarea name="note" rows="2" class="w-full border-gray-300 rounded-md shadow-sm text-sm">{{ $maintenance->note }}</textarea>
                         </div>
 
+                        {{-- Tombol Update (Muncul jika belum selesai) --}}
                         @if($maintenance->status != 'completed')
                         <div class="mt-4 text-right">
                             <button type="submit" class="text-sm bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 shadow">
@@ -77,9 +84,8 @@
                             @method('PUT')
 
                             <div class="bg-yellow-50 p-3 rounded-md mb-4 text-xs text-yellow-800 border border-yellow-200">
-                                <p class="font-bold">Info Status</p>
-                                <p>Status saat ini: <b>SEDANG PROSES</b> (In Progress).</p>
-                                <p class="mt-1">Klik tombol di bawah HANYA jika perbaikan sudah tuntas.</p>
+                                <p class="font-bold">⚠ Perhatian</p>
+                                <p>Pastikan Vendor dan Tindakan di sebelah kiri sudah diisi sebelum menyelesaikan tiket ini.</p>
                             </div>
 
                             <div class="mb-4">
@@ -99,9 +105,13 @@
                             </div>
                         </form>
                     @else
-                        {{-- TAMPILAN SUDAH SELESAI --}}
+                        {{-- TAMPILAN JIKA SUDAH SELESAI --}}
                         <div class="space-y-4">
-                            <div class="grid grid-cols-1 gap-4 text-sm">
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500">Vendor</label>
+                                    <div class="text-gray-900">{{ $maintenance->vendor_name ?? '-' }}</div>
+                                </div>
                                 <div>
                                     <label class="block text-xs font-bold text-gray-500">Tindakan</label>
                                     <div class="text-gray-900">{{ $maintenance->action_taken ?? '-' }}</div>

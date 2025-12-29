@@ -161,69 +161,71 @@ class BorrowingController extends Controller
     }
 
     public function returnItem(Request $request, $id)
-    {
-        $request->validate([
-            'return_condition' => 'required|string',
-            'final_status' => 'required|string',
+{
+    // [UBAH] Validasi dinamis
+    $rules = [
+        'return_condition' => 'required|string',
+        'final_status' => 'required|string',
+    ];
+
+    // Kalau kondisi Rusak, WAJIB pilih jenis maintenance
+    if (in_array($request->return_condition, ['Rusak Berat', 'Rusak Ringan'])) {
+        $rules['maintenance_type_id'] = 'required|exists:maintenance_types,id';
+    }
+
+    $request->validate($rules);
+
+    DB::transaction(function () use ($request, $id) {
+        $borrowing = Borrowing::with('items.tool')->findOrFail($id);
+        
+        $borrowing->update([
+            'borrowing_status' => 'returned', 
+            'actual_return_date' => now(), 
+            'return_condition' => $request->return_condition,
+            'final_status' => $request->final_status,
         ]);
 
-        DB::transaction(function () use ($request, $id) {
-            $borrowing = Borrowing::with('items.tool')->findOrFail($id);
-            
-            // 1. Update Peminjaman
-            $borrowing->update([
-                'borrowing_status' => 'returned', 
-                'actual_return_date' => now(), 
-                'return_condition' => $request->return_condition,
-                'final_status' => $request->final_status,
-            ]);
+        $newToolStatus = 'available'; 
+        $needsMaintenance = false;
 
-            // 2. Logic Status Alat
+        if ($request->final_status == 'Hilang') {
+            $newToolStatus = 'disposed'; 
+        } elseif (in_array($request->return_condition, ['Rusak Berat', 'Rusak Ringan'])) {
+            $newToolStatus = 'maintenance'; 
+            $needsMaintenance = true;
+        } elseif ($request->final_status == 'Diganti') {
             $newToolStatus = 'available'; 
-            $needsMaintenance = false;
+        }
 
-            if ($request->final_status == 'Hilang') {
-                $newToolStatus = 'disposed'; 
-            } elseif (in_array($request->return_condition, ['Rusak Berat', 'Rusak Ringan'])) {
-                $newToolStatus = 'maintenance'; 
-                $needsMaintenance = true;
-            } elseif ($request->final_status == 'Diganti') {
-                $newToolStatus = 'available'; 
-            }
+        foreach ($borrowing->items as $item) {
+            if($item->tool) {
+                $item->tool->update([
+                    'availability_status' => $newToolStatus,
+                    'current_condition' => $request->return_condition
+                ]);
 
-            foreach ($borrowing->items as $item) {
-                if($item->tool) {
-                    $item->tool->update([
-                        'availability_status' => $newToolStatus,
-                        'current_condition' => $request->return_condition
+                // [UBAH] Logic Maintenance pakai inputan User
+                if ($needsMaintenance) {
+                    Maintenance::create([
+                        'tool_id'       => $item->tool_id,
+                        'user_id'       => Auth::id(),
+                        'start_date'    => now(),
+                        'note'          => $request->return_condition . ' - Eks Peminjaman #' . $borrowing->id,
+                        
+                        // [PENTING] Ambil dari dropdown form
+                        'maintenance_type_id' => $request->maintenance_type_id, 
+                        
+                        'status'        => 'in_progress', 
+                        'cost'          => 0,
+                        'action_taken'  => null,
                     ]);
-
-                    // === AUTO MAINTENANCE ===
-                    if ($needsMaintenance) {
-                        $defaultType = MaintenanceType::first();
-                        $typeId = $defaultType ? $defaultType->id : 1; 
-
-                        Maintenance::create([
-                            'tool_id'       => $item->tool_id,
-                            'user_id'       => Auth::id(),
-                            'start_date'    => now(),
-                            'note'          => $request->return_condition . ' - Eks Peminjaman #' . $borrowing->id,
-                            'maintenance_type_id' => $typeId,
-                            
-                            // REVISI: Langsung set status 'in_progress' (Proses)
-                            'status'        => 'in_progress', 
-                            
-                            'cost'          => 0,
-                            // 'vendor_name' dihapus/tidak diisi
-                            'action_taken'  => null,
-                        ]);
-                    }
                 }
             }
-        });
+        }
+    });
 
-        return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan. Masuk status maintenance (Proses).');
-    }
+    return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan & status diperbarui.');
+}
 
     public function edit($id)
     {

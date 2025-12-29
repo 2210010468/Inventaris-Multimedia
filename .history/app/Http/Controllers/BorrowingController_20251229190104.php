@@ -162,15 +162,22 @@ class BorrowingController extends Controller
 
     public function returnItem(Request $request, $id)
     {
-        $request->validate([
+        // [UBAH] Validasi dinamis
+        $rules = [
             'return_condition' => 'required|string',
             'final_status' => 'required|string',
-        ]);
+        ];
+
+        // Kalau kondisi Rusak, WAJIB pilih jenis maintenance
+        if (in_array($request->return_condition, ['Rusak Berat', 'Rusak Ringan'])) {
+            $rules['maintenance_type_id'] = 'required|exists:maintenance_types,id';
+        }
+
+        $request->validate($rules);
 
         DB::transaction(function () use ($request, $id) {
             $borrowing = Borrowing::with('items.tool')->findOrFail($id);
             
-            // 1. Update Peminjaman
             $borrowing->update([
                 'borrowing_status' => 'returned', 
                 'actual_return_date' => now(), 
@@ -178,7 +185,6 @@ class BorrowingController extends Controller
                 'final_status' => $request->final_status,
             ]);
 
-            // 2. Logic Status Alat
             $newToolStatus = 'available'; 
             $needsMaintenance = false;
 
@@ -198,23 +204,19 @@ class BorrowingController extends Controller
                         'current_condition' => $request->return_condition
                     ]);
 
-                    // === AUTO MAINTENANCE ===
+                    // [UBAH] Logic Maintenance pakai inputan User
                     if ($needsMaintenance) {
-                        $defaultType = MaintenanceType::first();
-                        $typeId = $defaultType ? $defaultType->id : 1; 
-
                         Maintenance::create([
                             'tool_id'       => $item->tool_id,
                             'user_id'       => Auth::id(),
                             'start_date'    => now(),
                             'note'          => $request->return_condition . ' - Eks Peminjaman #' . $borrowing->id,
-                            'maintenance_type_id' => $typeId,
                             
-                            // REVISI: Langsung set status 'in_progress' (Proses)
+                            // [PENTING] Ambil dari dropdown form
+                            'maintenance_type_id' => $request->maintenance_type_id, 
+                            
                             'status'        => 'in_progress', 
-                            
                             'cost'          => 0,
-                            // 'vendor_name' dihapus/tidak diisi
                             'action_taken'  => null,
                         ]);
                     }
@@ -222,7 +224,7 @@ class BorrowingController extends Controller
             }
         });
 
-        return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan. Masuk status maintenance (Proses).');
+        return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan & status diperbarui.');
     }
 
     public function edit($id)

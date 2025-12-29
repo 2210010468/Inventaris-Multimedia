@@ -19,17 +19,15 @@ class BorrowingController extends Controller
      */
     public function index(Request $request)
     {
+        // Panggil fungsi private untuk query agar tidak menulis ulang logika yang sama
         $query = $this->getFilteredQuery($request);
 
-        $borrowings = $query->with(['borrower', 'items.tool', 'user'])
-                            ->latest()
-                            ->paginate(5);        
+        // Ambil data dengan Pagination (6 per halaman)
+        $borrowings = $query->with(['borrower', 'items.tool', 'user']) // <--- Tambahkan 'user'
+                        ->latest()
+                        ->paginate(5);        
 
-        // [BARU] Ambil jenis maintenance buat dropdown
-        $maintenanceTypes = MaintenanceType::all(); 
-
-        // [UBAH] Tambahkan compact 'maintenanceTypes'
-        return view('borrowings.index', compact('borrowings', 'maintenanceTypes'));
+        return view('borrowings.index', compact('borrowings'));
     }
 
     /**
@@ -178,13 +176,14 @@ class BorrowingController extends Controller
                 'final_status' => $request->final_status,
             ]);
 
-            // 2. Logic Status Alat
+            // 2. Tentukan Status Alat & Maintenance
             $newToolStatus = 'available'; 
-            $needsMaintenance = false;
+            $needsMaintenance = false; // Flag penanda
 
             if ($request->final_status == 'Hilang') {
                 $newToolStatus = 'disposed'; 
             } elseif (in_array($request->return_condition, ['Rusak Berat', 'Rusak Ringan'])) {
+                // REVISI: Baik Rusak Berat maupun Ringan, alat masuk maintenance
                 $newToolStatus = 'maintenance'; 
                 $needsMaintenance = true;
             } elseif ($request->final_status == 'Diganti') {
@@ -193,36 +192,46 @@ class BorrowingController extends Controller
 
             foreach ($borrowing->items as $item) {
                 if($item->tool) {
+                    // Update Status Alat di Master Data
                     $item->tool->update([
                         'availability_status' => $newToolStatus,
                         'current_condition' => $request->return_condition
                     ]);
 
-                    // === AUTO MAINTENANCE ===
+                    // ========================================================
+                    // FITUR OTOMATIS: BUAT TIKET MAINTENANCE
+                    // ========================================================
                     if ($needsMaintenance) {
+                        // Agar tidak error "maintenance_type_id cannot be null", 
+                        // kita ambil tipe pertama yg ada di DB (biasanya 'Umum').
+                        // Jika DB kosong, fallback ke angka 1.
                         $defaultType = MaintenanceType::first();
                         $typeId = $defaultType ? $defaultType->id : 1; 
 
                         Maintenance::create([
                             'tool_id'       => $item->tool_id,
-                            'user_id'       => Auth::id(),
+                            'user_id'       => Auth::id(), // Admin yang memproses pengembalian
                             'start_date'    => now(),
+                            
+                            // Catatan otomatis dari kondisi
                             'note'          => $request->return_condition . ' - Eks Peminjaman #' . $borrowing->id,
-                            'maintenance_type_id' => $typeId,
                             
-                            // REVISI: Langsung set status 'in_progress' (Proses)
-                            'status'        => 'in_progress', 
+                            // Isi ID Tipe agar tidak error SQL
+                            'maintenance_type_id' => $typeId, 
                             
-                            'cost'          => 0,
-                            // 'vendor_name' dihapus/tidak diisi
+                            // Field lain kosongkan dulu
+                            'vendor_name'   => null,
                             'action_taken'  => null,
+                            'cost'          => 0,
+                            'status'        => 'pending' // Status awal: Pending (Menunggu dilengkapi admin)
                         ]);
                     }
+                    // ========================================================
                 }
             }
         });
 
-        return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan. Masuk status maintenance (Proses).');
+        return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan. Data Maintenance dibuat otomatis jika rusak.');
     }
 
     public function edit($id)

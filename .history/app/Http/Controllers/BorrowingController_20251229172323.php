@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Borrowing;
 use App\Models\Tool;
 use App\Models\Borrower;
-use App\Models\Maintenance;
-use App\Models\MaintenanceType;
+use App\Models\BorrowingItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; 
 use Illuminate\Support\Facades\Auth;
@@ -19,17 +18,13 @@ class BorrowingController extends Controller
      */
     public function index(Request $request)
     {
+        // Panggil fungsi private untuk query agar tidak menulis ulang logika yang sama
         $query = $this->getFilteredQuery($request);
 
-        $borrowings = $query->with(['borrower', 'items.tool', 'user'])
-                            ->latest()
-                            ->paginate(5);        
-
-        // [BARU] Ambil jenis maintenance buat dropdown
-        $maintenanceTypes = MaintenanceType::all(); 
-
-        // [UBAH] Tambahkan compact 'maintenanceTypes'
-        return view('borrowings.index', compact('borrowings', 'maintenanceTypes'));
+        // Ambil data dengan Pagination (6 per halaman)
+        $borrowings = $query->latest()->paginate(6)->withQueryString();
+        
+        return view('borrowings.index', compact('borrowings'));
     }
 
     /**
@@ -162,67 +157,51 @@ class BorrowingController extends Controller
 
     public function returnItem(Request $request, $id)
     {
+        // 1. Validasi Input dari Modal
         $request->validate([
-            'return_condition' => 'required|string',
-            'final_status' => 'required|string',
+            'returned_at'      => 'required|date',
+            'return_condition' => 'required|string', // Baik, Rusak, dll
+            'final_status'     => 'required|string', // Selesai, Hilang, Diganti
         ]);
 
+        // 2. Gunakan Transaction agar aman
         DB::transaction(function () use ($request, $id) {
             $borrowing = Borrowing::with('items.tool')->findOrFail($id);
-            
-            // 1. Update Peminjaman
+
+            // Update Data Peminjaman (History)
             $borrowing->update([
-                'borrowing_status' => 'returned', 
-                'actual_return_date' => now(), 
-                'return_condition' => $request->return_condition,
-                'final_status' => $request->final_status,
+                'borrowing_status'   => 'returned',
+                'actual_return_date' => $request->returned_at,
+                'return_condition'   => $request->return_condition,
+                'final_status'       => $request->final_status,
             ]);
 
-            // 2. Logic Status Alat
-            $newToolStatus = 'available'; 
-            $needsMaintenance = false;
+            // 3. Logika Update Status Alat (Real-time Stock)
+            // Tentukan status alat berdasarkan "Status Akhir" transaksi
+            $newToolStatus = 'available'; // Default: Kembali Normal
 
             if ($request->final_status == 'Hilang') {
-                $newToolStatus = 'disposed'; 
-            } elseif (in_array($request->return_condition, ['Rusak Berat', 'Rusak Ringan'])) {
-                $newToolStatus = 'maintenance'; 
-                $needsMaintenance = true;
+                $newToolStatus = 'disposed'; // Alat hilang -> stok habis/musnah
+            } elseif ($request->return_condition == 'Rusak Berat') {
+                $newToolStatus = 'maintenance'; // Alat rusak -> masuk perbaikan
             } elseif ($request->final_status == 'Diganti') {
+                // Jika diganti rugi, biasanya barang lama dianggap sudah tidak ada/diganti baru
+                // Disini kita set 'available' asumsi barang pengganti sudah diterima
                 $newToolStatus = 'available'; 
             }
 
+            // Terapkan status baru ke SEMUA alat dalam transaksi ini
             foreach ($borrowing->items as $item) {
-                if($item->tool) {
+                if ($item->tool) {
                     $item->tool->update([
                         'availability_status' => $newToolStatus,
-                        'current_condition' => $request->return_condition
+                        'current_condition'   => $request->return_condition // Update kondisi fisik juga
                     ]);
-
-                    // === AUTO MAINTENANCE ===
-                    if ($needsMaintenance) {
-                        $defaultType = MaintenanceType::first();
-                        $typeId = $defaultType ? $defaultType->id : 1; 
-
-                        Maintenance::create([
-                            'tool_id'       => $item->tool_id,
-                            'user_id'       => Auth::id(),
-                            'start_date'    => now(),
-                            'note'          => $request->return_condition . ' - Eks Peminjaman #' . $borrowing->id,
-                            'maintenance_type_id' => $typeId,
-                            
-                            // REVISI: Langsung set status 'in_progress' (Proses)
-                            'status'        => 'in_progress', 
-                            
-                            'cost'          => 0,
-                            // 'vendor_name' dihapus/tidak diisi
-                            'action_taken'  => null,
-                        ]);
-                    }
                 }
             }
         });
 
-        return redirect()->route('borrowings.index')->with('success', 'Barang dikembalikan. Masuk status maintenance (Proses).');
+        return redirect()->route('borrowings.index')->with('success', 'Pengembalian berhasil diproses. Status alat telah diperbarui.');
     }
 
     public function edit($id)

@@ -230,7 +230,6 @@
                                                     </div>
                                                 </div>
 
-                                                
                                                 @auth
                                                     @if(!auth()->user()->isHead())
                                                         

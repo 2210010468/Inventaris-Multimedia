@@ -19,17 +19,15 @@ class BorrowingController extends Controller
      */
     public function index(Request $request)
     {
+        // Panggil fungsi private untuk query agar tidak menulis ulang logika yang sama
         $query = $this->getFilteredQuery($request);
 
-        $borrowings = $query->with(['borrower', 'items.tool', 'user'])
-                            ->latest()
-                            ->paginate(5);        
+        // Ambil data dengan Pagination (6 per halaman)
+        $borrowings = $query->with(['borrower', 'items.tool', 'user']) // <--- Tambahkan 'user'
+                        ->latest()
+                        ->paginate(5);        
 
-        // [BARU] Ambil jenis maintenance buat dropdown
-        $maintenanceTypes = MaintenanceType::all(); 
-
-        // [UBAH] Tambahkan compact 'maintenanceTypes'
-        return view('borrowings.index', compact('borrowings', 'maintenanceTypes'));
+        return view('borrowings.index', compact('borrowings'));
     }
 
     /**

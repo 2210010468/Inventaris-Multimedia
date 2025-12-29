@@ -230,7 +230,7 @@
                                                     </div>
                                                 </div>
 
-                                                
+                                                {{-- 2. TOMBOL EDIT & KEMBALIKAN (HANYA UNTUK ROLE TERTENTU) --}}
                                                 @auth
                                                     @if(!auth()->user()->isHead())
                                                         

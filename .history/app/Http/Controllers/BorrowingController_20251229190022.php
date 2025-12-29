@@ -18,19 +18,19 @@ class BorrowingController extends Controller
      * Menampilkan daftar peminjaman dengan fitur Filter & Search
      */
     public function index(Request $request)
-    {
-        $query = $this->getFilteredQuery($request);
+{
+    $query = $this->getFilteredQuery($request);
 
-        $borrowings = $query->with(['borrower', 'items.tool', 'user'])
-                            ->latest()
-                            ->paginate(5);        
+    $borrowings = $query->with(['borrower', 'items.tool', 'user'])
+                        ->latest()
+                        ->paginate(5);        
 
-        // [BARU] Ambil jenis maintenance buat dropdown
-        $maintenanceTypes = MaintenanceType::all(); 
+    // [BARU] Ambil jenis maintenance buat dropdown
+    $maintenanceTypes = MaintenanceType::all(); 
 
-        // [UBAH] Tambahkan compact 'maintenanceTypes'
-        return view('borrowings.index', compact('borrowings', 'maintenanceTypes'));
-    }
+    // [UBAH] Tambahkan compact 'maintenanceTypes'
+    return view('borrowings.index', compact('borrowings', 'maintenanceTypes'));
+}
 
     /**
      * [BARU] Export Laporan ke PDF
