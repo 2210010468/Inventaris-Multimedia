@@ -119,7 +119,11 @@
                                         @else
                                             {{-- BUTTON UNTUK ADMIN (TETAP SEPERTI SEMULA) --}}
                                             <button 
-                                                onclick="openModal('{{ $p->id }}', '{{ addslashes($p->tool_name) }}', '{{ $p->unit_price }}')"
+                                                type="button"
+                                                onclick="openModal(this)"
+                                                data-id="{{ $p->id }}"
+                                                data-name="{{ $p->tool_name }}"
+                                                data-price="{{ $p->unit_price }}"
                                                 class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-sm text-sm flex items-center justify-center gap-2 mx-auto transition-all transform hover:scale-105">
                                                 Process
                                             </button>
@@ -149,8 +153,7 @@
     </div>
 
     {{-- MODAL UPLOAD --}}
-    <div id="uploadModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div id="uploadModal" style="z-index: 9999; display: none;" class="fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
@@ -168,44 +171,13 @@
                                         Upload nota/bukti pembayaran untuk: <br>
                                         <strong id="modalToolName" class="text-gray-900 text-base">Nama Barang</strong>
                                     </p>
-
-                                    {{-- 1. ERROR MESSAGE AREA (Supaya ketahuan kalau ada error) --}}
-                                    @if($errors->any())
-                                        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm">
-                                            <ul class="list-disc pl-4">
-                                                @foreach ($errors->all() as $error)
-                                                    <li>{{ $error }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                        {{-- Script kecil biar modal tetap terbuka kalau error --}}
-                                        <script>
-                                            document.addEventListener("DOMContentLoaded", function() {
-                                                document.getElementById('uploadModal').classList.remove('hidden');
-                                            });
-                                        </script>
-                                    @endif
-
-                                    {{-- 2. INPUT FILE (Tetap) --}}
                                     <div class="mb-4">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Upload Invoice / Receipt</label>
                                         <input type="file" name="proof_photo" required class="block w-full text-sm text-gray-500 border border-gray-300 rounded-md p-1" accept="image/*">
                                     </div>
-
-                                    {{-- 3. INPUT BRAND (INI YANG KURANG TADI) --}}
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-bold text-gray-700 mb-1">Brand / Merk</label>
-                                        <input type="text" name="brand" placeholder="Contoh: Canon, Makita, Epson" required 
-                                            value="{{ old('brand') }}"
-                                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                                        <p class="text-xs text-gray-400 mt-1">Wajib diisi untuk data inventaris.</p>
-                                    </div>
-
-                                    {{-- 4. INPUT PRICE (Tetap) --}}
                                     <div class="mb-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Final Price / Unit (Rp)</label>
-                                        <input type="number" name="real_price" id="modalPrice" required
-                                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                        <input type="number" name="real_price" id="modalPrice" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                         <p class="text-xs text-gray-400 mt-1">Sesuaikan harga jika berbeda dengan estimasi awal.</p>
                                     </div>
                                 </div>
@@ -223,18 +195,31 @@
     </div>
 
     <script>
-        function openModal(id, name, price) {
-            const form = document.getElementById('evidenceForm');
-            const url = "{{ route('purchases.evidence', ':id') }}"; 
-            form.action = url.replace(':id', id);
-            
-            document.getElementById('modalToolName').innerText = name;
-            document.getElementById('modalPrice').value = price;
-            document.getElementById('uploadModal').classList.remove('hidden');
-        }
+    console.log('Script Transaction dimuat!');
 
-        function closeModal() {
-            document.getElementById('uploadModal').classList.add('hidden');
+    function openModal(element) {
+        // ... (bagian ambil data ID, Name, Price TETAP SAMA seperti sebelumnya) ...
+        const id = element.getAttribute('data-id');
+        const name = element.getAttribute('data-name');
+        const price = element.getAttribute('data-price');
+        
+        const form = document.getElementById('evidenceForm');
+        // Pastikan nama route ini 'purchases.evidence' sesuai web.php Anda
+        const urlTemplate = "{{ route('purchases.evidence', ':id') }}"; 
+        form.action = urlTemplate.replace(':id', id);
+        
+        document.getElementById('modalToolName').innerText = name;
+        document.getElementById('modalPrice').value = price;
+
+        // --- PERUBAHAN DI SINI (Memaksa Display Block) ---
+        const modal = document.getElementById('uploadModal');
+        modal.style.display = 'block'; // Paksa muncul
+        console.log('Modal dipaksa muncul dengan display: block');
+    }
+
+    function closeModal() {
+        // Sembunyikan lagi
+        document.getElementById('uploadModal').style.display = 'none';
         }
     </script>
 </x-app-layout>

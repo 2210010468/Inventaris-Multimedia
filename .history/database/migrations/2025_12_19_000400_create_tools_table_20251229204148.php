@@ -24,7 +24,6 @@ return new class extends Migration
             $table->string('current_condition')->default('Baik');
             $table->enum('availability_status', ['available', 'borrowed', 'maintenance', 'disposed'])->default('available');
             
-            $table->string('disposal_reason')->nullable(); // Alasan hapus (Rusak/Hilang/dll)
             
             $table->unsignedBigInteger('purchase_item_id')->nullable();
             

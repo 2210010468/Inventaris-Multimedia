@@ -160,10 +160,10 @@
                                                         <form action="{{ route('tools.destroy', $tool->id) }}" method="POST" onsubmit="return confirm('Yakin hapus alat ini?');">
                                                             @csrf @method('DELETE')
                                                             <button type="button" 
-                                                                    onclick="openDeleteModal('{{ $tool->id }}', '{{ $tool->tool_name }}', '{{ $tool->tool_code }}')" 
-                                                                    class="text-red-600 hover:text-red-900 ml-2">
-                                                                Delete
-                                                            </button>
+        onclick="openDeleteModal('{{ $tool->id }}', '{{ $tool->tool_name }}', '{{ $tool->tool_code }}')" 
+        class="text-red-600 hover:text-red-900 ml-2">
+    Delete
+</button>
                                                         </form>
                                                     @endif
                                                 @endauth
@@ -255,60 +255,4 @@
             </div>
         </div>
     </div>
-    {{-- MODAL HAPUS BARANG (BARANG MUSNAH) --}}
-    <div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
-
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-                {{-- Form Delete mengarah ke method destroy --}}
-                <form id="deleteForm" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">Konfirmasi Penghapusan Aset</h3>
-                        <p class="text-sm text-gray-500 mb-4">
-                            Anda akan menghapus: <strong id="delToolName"></strong> (<span id="delToolCode"></span>).<br>
-                            Data akan dipindahkan ke "Inventaris Tak Terpakai" (Trash).
-                        </p>
-
-                        {{-- DROPDOWN ALASAN --}}
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Alasan Penghapusan / Pemusnahan:</label>
-                        <select name="disposal_reason" required class="block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
-                            <option value="" disabled selected>-- Pilih Alasan --</option>
-                            <option value="Rusak Total">Rusak Total / Mati Total</option>
-                            <option value="Hilang">Hilang</option>
-                            <option value="Dijual">Dijual / Lelang</option>
-                            <option value="Hibah">Dihibahkan</option>
-                            <option value="Kadaluarsa">Kadaluarsa / Usang (Obsolete)</option>
-                        </select>
-                    </div>
-
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:w-auto sm:text-sm">
-                            Confirm & Delete
-                        </button>
-                        <button type="button" onclick="closeDeleteModal()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:w-auto sm:text-sm">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function openDeleteModal(id, name, code) {
-            // Sesuaikan URL ini dengan route resource tools Anda
-            document.getElementById('deleteForm').action = "/tools/" + id; 
-            document.getElementById('delToolName').innerText = name;
-            document.getElementById('delToolCode').innerText = code;
-            document.getElementById('deleteModal').classList.remove('hidden');
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.add('hidden');
-        }
-    </script>
 </x-app-layout>

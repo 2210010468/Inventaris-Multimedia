@@ -61,58 +61,58 @@
                     {{-- TABEL DATA --}}
                     <div class="overflow-x-auto border rounded-lg">
                         <table class="min-w-full table-auto text-sm text-left">
-                            <thead class="bg-gray-100 text-gray-600 uppercase font-medium">
-                                <tr>
-                                    <th class="px-4 py-3">Kode</th>
-                                    <th class="px-4 py-3">Nama Alat</th>
-                                    <th class="px-4 py-3">Kategori</th>
-                                    <th class="px-4 py-3">Tgl Dihapus</th>
-                                    <th class="px-4 py-3">Alasan Musnah</th> {{-- KOLOM BARU --}}
-                                    <th class="px-4 py-3 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                @forelse ($tools as $tool)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 font-mono">{{ $tool->tool_code }}</td>
-                                        <td class="px-4 py-3 font-bold">{{ $tool->tool_name }}</td>
-                                        <td class="px-4 py-3">{{ $tool->category->category_name ?? '-' }}</td>
-                                        <td class="px-4 py-3 text-red-600 text-xs">
-                                            {{ $tool->deleted_at->format('d M Y') }}
-                                        </td>
-                                        
-                                        {{-- TAMPILKAN ALASAN DI SINI --}}
-                                        <td class="px-4 py-3">
-                                            <span class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
-                                                {{ $tool->disposal_reason ?? 'Tidak ada alasan' }}
-                                            </span>
-                                        </td>
+                           <thead class="bg-gray-100 text-gray-600 uppercase font-medium">
+    <tr>
+        <th class="px-4 py-3">Kode</th>
+        <th class="px-4 py-3">Nama Alat</th>
+        <th class="px-4 py-3">Kategori</th>
+        <th class="px-4 py-3">Tgl Dihapus</th>
+        <th class="px-4 py-3">Alasan Musnah</th> {{-- KOLOM BARU --}}
+        <th class="px-4 py-3 text-center">Aksi</th>
+    </tr>
+</thead>
+<tbody class="divide-y divide-gray-200">
+    @forelse ($tools as $tool)
+        <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-mono">{{ $tool->tool_code }}</td>
+            <td class="px-4 py-3 font-bold">{{ $tool->tool_name }}</td>
+            <td class="px-4 py-3">{{ $tool->category->category_name ?? '-' }}</td>
+            <td class="px-4 py-3 text-red-600 text-xs">
+                {{ $tool->deleted_at->format('d M Y') }}
+            </td>
+            
+            {{-- TAMPILKAN ALASAN DI SINI --}}
+            <td class="px-4 py-3">
+                <span class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
+                    {{ $tool->disposal_reason ?? 'Tidak ada alasan' }}
+                </span>
+            </td>
 
-                                        <td class="px-4 py-3 text-center">
-                                            {{-- (Tombol Restore tetap sama seperti sebelumnya) --}}
-                                            @auth
-                                                @if(!auth()->user()->isHead())
-                                                    <form action="{{ route('tools.restore', $tool->id) }}" method="POST" onsubmit="return confirm('Kembalikan alat ini ke daftar aktif?');">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <button type="submit" class="bg-green-100 text-green-700 px-3 py-1 rounded-md hover:bg-green-200 text-xs font-bold transition">
-                                                            Pulihkan
-                                                        </button>
-                                                    </form>
-                                                @else
-                                                    <span class="text-gray-400 text-xs italic">Read-only</span>
-                                                @endif
-                                            @endauth
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center py-8 text-gray-400">
-                                            Tidak ada data sampah ditemukan.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
+            <td class="px-4 py-3 text-center">
+                {{-- (Tombol Restore tetap sama seperti sebelumnya) --}}
+                 @auth
+                    @if(!auth()->user()->isHead())
+                        <form action="{{ route('tools.restore', $tool->id) }}" method="POST" onsubmit="return confirm('Kembalikan alat ini ke daftar aktif?');">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="bg-green-100 text-green-700 px-3 py-1 rounded-md hover:bg-green-200 text-xs font-bold transition">
+                                Pulihkan
+                            </button>
+                        </form>
+                    @else
+                        <span class="text-gray-400 text-xs italic">Read-only</span>
+                    @endif
+                @endauth
+            </td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="6" class="text-center py-8 text-gray-400">
+                Tidak ada data sampah ditemukan.
+            </td>
+        </tr>
+    @endforelse
+</tbody>
                         </table>
                     </div>
 

@@ -119,7 +119,11 @@
                                         @else
                                             {{-- BUTTON UNTUK ADMIN (TETAP SEPERTI SEMULA) --}}
                                             <button 
-                                                onclick="openModal('{{ $p->id }}', '{{ addslashes($p->tool_name) }}', '{{ $p->unit_price }}')"
+                                                type="button"
+                                                onclick="openModal(this)"
+                                                data-id="{{ $p->id }}"
+                                                data-name="{{ $p->tool_name }}"
+                                                data-price="{{ $p->unit_price }}"
                                                 class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-sm text-sm flex items-center justify-center gap-2 mx-auto transition-all transform hover:scale-105">
                                                 Process
                                             </button>
@@ -168,44 +172,13 @@
                                         Upload nota/bukti pembayaran untuk: <br>
                                         <strong id="modalToolName" class="text-gray-900 text-base">Nama Barang</strong>
                                     </p>
-
-                                    {{-- 1. ERROR MESSAGE AREA (Supaya ketahuan kalau ada error) --}}
-                                    @if($errors->any())
-                                        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm">
-                                            <ul class="list-disc pl-4">
-                                                @foreach ($errors->all() as $error)
-                                                    <li>{{ $error }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                        {{-- Script kecil biar modal tetap terbuka kalau error --}}
-                                        <script>
-                                            document.addEventListener("DOMContentLoaded", function() {
-                                                document.getElementById('uploadModal').classList.remove('hidden');
-                                            });
-                                        </script>
-                                    @endif
-
-                                    {{-- 2. INPUT FILE (Tetap) --}}
                                     <div class="mb-4">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Upload Invoice / Receipt</label>
                                         <input type="file" name="proof_photo" required class="block w-full text-sm text-gray-500 border border-gray-300 rounded-md p-1" accept="image/*">
                                     </div>
-
-                                    {{-- 3. INPUT BRAND (INI YANG KURANG TADI) --}}
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-bold text-gray-700 mb-1">Brand / Merk</label>
-                                        <input type="text" name="brand" placeholder="Contoh: Canon, Makita, Epson" required 
-                                            value="{{ old('brand') }}"
-                                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                                        <p class="text-xs text-gray-400 mt-1">Wajib diisi untuk data inventaris.</p>
-                                    </div>
-
-                                    {{-- 4. INPUT PRICE (Tetap) --}}
                                     <div class="mb-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Final Price / Unit (Rp)</label>
-                                        <input type="number" name="real_price" id="modalPrice" required
-                                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                        <input type="number" name="real_price" id="modalPrice" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                         <p class="text-xs text-gray-400 mt-1">Sesuaikan harga jika berbeda dengan estimasi awal.</p>
                                     </div>
                                 </div>
@@ -223,18 +196,28 @@
     </div>
 
     <script>
-        function openModal(id, name, price) {
-            const form = document.getElementById('evidenceForm');
-            const url = "{{ route('purchases.evidence', ':id') }}"; 
-            form.action = url.replace(':id', id);
-            
-            document.getElementById('modalToolName').innerText = name;
-            document.getElementById('modalPrice').value = price;
-            document.getElementById('uploadModal').classList.remove('hidden');
-        }
+    function openModal(element) {
+        // 1. Ambil data dari atribut tombol yang diklik (ini mencegah error tanda kutip/spasi)
+        const id = element.getAttribute('data-id');
+        const name = element.getAttribute('data-name');
+        const price = element.getAttribute('data-price');
 
-        function closeModal() {
-            document.getElementById('uploadModal').classList.add('hidden');
-        }
-    </script>
+        // 2. Setup URL Form (Ganti :id dengan ID asli)
+        const form = document.getElementById('evidenceForm');
+        // Pastikan route ini benar ada di web.php
+        const urlTemplate = "{{ route('purchases.evidence', ':id') }}"; 
+        form.action = urlTemplate.replace(':id', id);
+        
+        // 3. Masukkan data ke tampilan Modal
+        document.getElementById('modalToolName').innerText = name;
+        document.getElementById('modalPrice').value = price;
+
+        // 4. Tampilkan Modal
+        document.getElementById('uploadModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('uploadModal').classList.add('hidden');
+    }
+</script>
 </x-app-layout>

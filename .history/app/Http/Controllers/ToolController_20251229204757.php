@@ -208,38 +208,38 @@ class ToolController extends Controller
     }
 
     public function destroy(Request $request, $id) // Tambahkan Request $request
-    {
-        // 1. Validasi Input Alasan (BARU: Agar tidak error jika kosong)
-        $request->validate([
-            'disposal_reason' => 'required|string|max:255',
-        ]);
+{
+    // 1. Validasi Input Alasan (BARU: Agar tidak error jika kosong)
+    $request->validate([
+        'disposal_reason' => 'required|string|max:255',
+    ]);
 
-        // 2. Cek Role (KODE LAMA: TETAP DIPERTAHANKAN)
-        $user = Auth::user();
-        if ($user && in_array($user->role, ['kepala','head'])) {
-            return redirect()->route('tools.index')->with('error', 'Akses ditolak.');
-        }
-
-        $tool = Tool::findOrFail($id);
-
-        // 3. Cek Status Barang (KODE LAMA: TETAP DIPERTAHANKAN)
-        if ($tool->availability_status == 'borrowed') {
-            return redirect()->back()->with('error', 'Gagal! Alat sedang dipinjam oleh seseorang.');
-        }
-        
-        if ($tool->availability_status == 'maintenance') {
-            return redirect()->back()->with('error', 'Gagal! Alat sedang dalam perbaikan.');
-        }
-
-        // 4. Proses Update & Hapus (REVISI: Sisipkan disposal_reason)
-        $tool->availability_status = 'disposed'; 
-        $tool->disposal_reason = $request->disposal_reason; // <--- SIMPAN ALASAN DARI FORM
-        $tool->save();
-        
-        $tool->delete(); 
-
-        return redirect()->route('tools.index')->with('success', 'Alat berhasil dipindahkan ke Inventaris Tak Terpakai. Alasan: ' . $request->disposal_reason);
+    // 2. Cek Role (KODE LAMA: TETAP DIPERTAHANKAN)
+    $user = Auth::user();
+    if ($user && in_array($user->role, ['kepala','head'])) {
+        return redirect()->route('tools.index')->with('error', 'Akses ditolak.');
     }
+
+    $tool = Tool::findOrFail($id);
+
+    // 3. Cek Status Barang (KODE LAMA: TETAP DIPERTAHANKAN)
+    if ($tool->availability_status == 'borrowed') {
+        return redirect()->back()->with('error', 'Gagal! Alat sedang dipinjam oleh seseorang.');
+    }
+    
+    if ($tool->availability_status == 'maintenance') {
+        return redirect()->back()->with('error', 'Gagal! Alat sedang dalam perbaikan.');
+    }
+
+    // 4. Proses Update & Hapus (REVISI: Sisipkan disposal_reason)
+    $tool->availability_status = 'disposed'; 
+    $tool->disposal_reason = $request->disposal_reason; // <--- SIMPAN ALASAN DARI FORM
+    $tool->save();
+    
+    $tool->delete(); 
+
+    return redirect()->route('tools.index')->with('success', 'Alat berhasil dipindahkan ke Inventaris Tak Terpakai. Alasan: ' . $request->disposal_reason);
+}
 
     // ==========================
     // 4. HELPER FUNCTION
