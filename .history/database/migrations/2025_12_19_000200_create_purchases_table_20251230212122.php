@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('tool_name');
             $table->text('specification')->nullable();
             $table->integer('quantity')->default(1);
-            $table->string('brand')->nullable();
+            $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 15, 2)->default(0); // Harga Rencana (Budget)
             $table->decimal('actual_unit_price', 15, 2)->nullable(); // Harga Asli (Realisasi)
             $table->decimal('subtotal', 15, 2)->default(0);
